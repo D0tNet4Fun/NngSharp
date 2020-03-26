@@ -11,5 +11,8 @@ namespace NngSharp.Native
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern NngErrorCode nng_pair0_open(out uint socket);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern NngErrorCode nng_pub0_open(out uint socket);
     }
 }
