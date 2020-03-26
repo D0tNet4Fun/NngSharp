@@ -11,7 +11,7 @@ namespace NngSharp
             switch (errorCode)
             {
                 case NngErrorCode.Success: return;
-                case NngErrorCode.Undefined: throw new InvalidOperationException("Error code was not set by NNG");
+                case NngErrorCode.Unknown: throw new InvalidOperationException("Error code was not set by NNG");
                 default: throw new NngException(errorCode);
             }
         }
