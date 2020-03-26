@@ -8,9 +8,11 @@ namespace NngSharp.Tests.Sockets
         [Fact]
         public void CreatePairSocket()
         {
-            using (var socket = new PairSocket())
-            {
-            }
+            using var socket1 = new PairSocket();
+            using var socket2 = new PairSocket();
+            var url1 = "tcp://127.0.0.1:25555";
+            socket1.Listen(url1);
+            socket2.Dial(url1);
         }
     }
 }

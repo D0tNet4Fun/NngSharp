@@ -7,6 +7,9 @@ namespace NngSharp.Native
     internal static partial class NativeMethods
     {
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
-        public static extern NngErrorCode nng_close(uint socket);
+        public static extern NngErrorCode nng_pair0_open(out uint socket);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern NngErrorCode nng_pub0_open(out uint socket);
     }
 }
