@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using NngSharp.Native;
 
 namespace NngSharp.Sockets
@@ -44,6 +45,38 @@ namespace NngSharp.Sockets
             var errorCode = NativeMethods.nng_dial(_id, url, out var dialerId, default);
             ErrorHandler.ThrowIfError(errorCode);
             _dialers.Add(dialerId);
+        }
+
+        public void Send(string data)
+        {
+            var bytes = Encoding.ASCII.GetBytes(data);
+            NngErrorCode errorCode;
+            unsafe
+            {
+                fixed (byte* ptr = bytes)
+                {
+                    errorCode = NativeMethods.nng_send(_id, ptr, (UIntPtr)bytes.Length, default);
+                }
+            }
+            ErrorHandler.ThrowIfError(errorCode);
+        }
+
+        public string Receive()
+        {
+            var bytes = new byte[1024];
+            var size = (UIntPtr)bytes.Length;
+
+            NngErrorCode errorCode;
+            unsafe
+            {
+                fixed (byte* ptr = bytes)
+                {
+                    errorCode = NativeMethods.nng_recv(_id, ptr, ref size, default);
+                }
+            }
+            ErrorHandler.ThrowIfError(errorCode);
+
+            return Encoding.ASCII.GetString(bytes, 0, (int)size);
         }
     }
 
