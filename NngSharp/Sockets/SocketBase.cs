@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using NngSharp.Native;
 
@@ -49,36 +51,78 @@ namespace NngSharp.Sockets
 
         public void Send(string data)
         {
-            var bytes = Encoding.ASCII.GetBytes(data);
+            var encoding = Encoding.UTF8;
+            var size = encoding.GetByteCount(data);
+            var bytes = encoding.GetBytes(data);
+
             NngErrorCode errorCode;
             unsafe
             {
                 fixed (byte* ptr = bytes)
                 {
-                    errorCode = NativeMethods.nng_send(_id, ptr, (UIntPtr)bytes.Length, default);
+                    errorCode = NativeMethods.nng_send(_id, (IntPtr)ptr, (UIntPtr)size, default);
                 }
             }
+
+            ErrorHandler.ThrowIfError(errorCode);
+        }
+
+        public void SendZeroCopy(string data)
+        {
+            // allocate memory in NNG and use a span to update it with string data
+
+            var encoding = Encoding.UTF8;
+            var size = encoding.GetByteCount(data);
+
+            var ptr = NativeMethods.nng_alloc((UIntPtr)size);
+
+            Span<byte> span;
+            unsafe
+            {
+                span = new Span<byte>(ptr.ToPointer(), size);
+            }
+            encoding.GetBytes(data, span); // now ptr contains the string data
+
+            var errorCode = NativeMethods.nng_send(_id, ptr, (UIntPtr)size, NativeMethods.NngFlags.Allocate);
             ErrorHandler.ThrowIfError(errorCode);
         }
 
         public string Receive()
         {
             var bytes = new byte[1024];
-            var size = (UIntPtr)bytes.Length;
 
+            var sizePtr = (UIntPtr)bytes.Length;
             NngErrorCode errorCode;
             unsafe
             {
                 fixed (byte* ptr = bytes)
                 {
-                    errorCode = NativeMethods.nng_recv(_id, ptr, ref size, default);
+                    errorCode = NativeMethods.nng_recv(_id, (IntPtr)ptr, ref sizePtr, default);
                 }
             }
             ErrorHandler.ThrowIfError(errorCode);
 
-            return Encoding.ASCII.GetString(bytes, 0, (int)size);
+            return Encoding.UTF8.GetString(bytes, 0, (int)sizePtr);
         }
-    }
 
-    public delegate NngErrorCode OpenSocket(out uint id); // common method signature for opening a socket using NativeMethods
+        public string ReceiveZeroCopy()
+        {
+            // get the pointer from NNG and use a span to read the string data
+
+            var errorCode = NativeMethods.nng_recv(_id, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate);
+            ErrorHandler.ThrowIfError(errorCode);
+
+            ReadOnlySpan<byte> span;
+            unsafe
+            {
+                span = new ReadOnlySpan<byte>(ptr.ToPointer(), (int)sizePtr);
+            }
+
+            return Encoding.UTF8.GetString(span);
+        }
+
+        public delegate NngErrorCode
+            OpenSocket(out uint id); // common method signature for opening a socket using NativeMethods
+    }
 }
+

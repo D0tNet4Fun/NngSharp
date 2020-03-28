@@ -11,9 +11,12 @@ namespace NngSharp.Native
         public static extern NngErrorCode nng_close(uint socket);
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
-        public static extern unsafe NngErrorCode nng_recv(uint socket, void* data, ref UIntPtr size, NngFlags flags);
+        public static extern NngErrorCode nng_recv(uint socket, IntPtr data, ref UIntPtr size, NngFlags flags);
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
-        public static extern unsafe NngErrorCode nng_send(uint socket, void* data, UIntPtr size, NngFlags flags);
+        public static extern NngErrorCode nng_recv(uint socket, out IntPtr data, out UIntPtr size, NngFlags flags);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern NngErrorCode nng_send(uint socket, IntPtr data, UIntPtr size, NngFlags flags);
     }
 }

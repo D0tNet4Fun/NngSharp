@@ -19,5 +19,19 @@ namespace NngSharp.Tests.Sockets
 
             Assert.Equal("hello!", result);
         }
+
+        [Fact]
+        public void SendZeroCopy_And_ReceiveZeroCopy()
+        {
+            using var sender = new PairSocket();
+            using var receiver = new PairSocket();
+            var url = "inproc://here";
+            sender.Listen(url);
+            receiver.Dial(url);
+            sender.SendZeroCopy("hello!");
+            var result = receiver.ReceiveZeroCopy();
+
+            Assert.Equal("hello!", result);
+        }
     }
 }
