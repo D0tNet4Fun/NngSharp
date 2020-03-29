@@ -6,6 +6,7 @@ namespace NngSharp.Messages
     public class Message : IEquatable<Message>, IDisposable
     {
         private NngMsg _nngMessage;
+        private bool _isDisposed;
 
         public Message(int sizeInBytes = 0)
         {
@@ -20,22 +21,22 @@ namespace NngSharp.Messages
 
         public void Dispose()
         {
-            if (_nngMessage.Ptr != default)
-            {
-                NativeMethods.nng_msg_free(_nngMessage);
-                _nngMessage = default;
-            }
+            if (_isDisposed) return;
+
+            NativeMethods.nng_msg_free(_nngMessage);
+            _nngMessage = default;
+            _isDisposed = true;
         }
 
         public bool Equals(Message other) => _nngMessage.Equals(other?._nngMessage);
 
-        public int Length => _nngMessage.Ptr != default ? (int) NativeMethods.nng_msg_len(_nngMessage) : 0;
+        public int Length => _isDisposed ? 0 : (int)NativeMethods.nng_msg_len(_nngMessage);
 
         public Span<byte> Body
         {
             get
             {
-                if(_nngMessage.Ptr == default) return Span<byte>.Empty;
+                if (_isDisposed) return Span<byte>.Empty;
                 var ptr = NativeMethods.nng_msg_body(_nngMessage);
                 unsafe
                 {

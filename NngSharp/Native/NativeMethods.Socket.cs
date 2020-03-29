@@ -23,6 +23,6 @@ namespace NngSharp.Native
     [StructLayout(LayoutKind.Sequential)]
     public struct NngSocket
     {
-        public uint Id;
+        private uint Id;
     }
 }

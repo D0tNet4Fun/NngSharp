@@ -38,6 +38,6 @@ namespace NngSharp.Native
     [StructLayout(LayoutKind.Sequential)]
     public struct NngMsg
     {
-        public IntPtr Ptr;
+        private IntPtr Ptr;
     }
 }

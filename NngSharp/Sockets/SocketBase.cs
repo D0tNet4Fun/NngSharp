@@ -20,8 +20,6 @@ namespace NngSharp.Sockets
 
         public void Dispose()
         {
-            if (_nngSocket.Id <= 0) return;
-
             var errorCode = NativeMethods.nng_close(_nngSocket);
             if (errorCode == NngErrorCode.Success)
             {

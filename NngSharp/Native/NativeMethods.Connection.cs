@@ -16,12 +16,12 @@ namespace NngSharp.Native
     [StructLayout(LayoutKind.Sequential)]
     internal struct NngDialer
     {
-        public uint Id;
+        private uint Id;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct NngListener
     {
-        public uint Id;
+        private uint Id;
     }
 }
