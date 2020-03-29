@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
 using NngSharp.Messages;
 using NngSharp.Native;
@@ -10,24 +8,24 @@ namespace NngSharp.Sockets
 {
     public class SocketBase : IDisposable
     {
-        private uint _id;
-        private readonly List<uint> _listeners = new List<uint>();
-        private readonly List<uint> _dialers = new List<uint>();
+        private NngSocket _nngSocket;
+        private readonly List<NngListener> _listeners = new List<NngListener>();
+        private readonly List<NngDialer> _dialers = new List<NngDialer>();
 
         protected SocketBase(OpenSocket openSocket)
         {
-            var errorCode = openSocket(out _id);
+            var errorCode = openSocket(out _nngSocket);
             ErrorHandler.ThrowIfError(errorCode);
         }
 
         public void Dispose()
         {
-            if (_id <= 0) return;
+            if (_nngSocket.Id <= 0) return;
 
-            var errorCode = NativeMethods.nng_close(_id);
+            var errorCode = NativeMethods.nng_close(_nngSocket);
             if (errorCode == NngErrorCode.Success)
             {
-                _id = 0;
+                _nngSocket = default;
                 _listeners.Clear(); // Listeners are implicitly closed when the socket they are associated with is closed
                 _dialers.Clear(); // Dialers are implicitly closed when the socket they are associated with is closed.
                 return;
@@ -38,16 +36,16 @@ namespace NngSharp.Sockets
 
         public void Listen(string url)
         {
-            var errorCode = NativeMethods.nng_listen(_id, url, out var listenerId, default);
+            var errorCode = NativeMethods.nng_listen(_nngSocket, url, out var nngListener, default);
             ErrorHandler.ThrowIfError(errorCode);
-            _listeners.Add(listenerId);
+            _listeners.Add(nngListener);
         }
 
         public void Dial(string url)
         {
-            var errorCode = NativeMethods.nng_dial(_id, url, out var dialerId, default);
+            var errorCode = NativeMethods.nng_dial(_nngSocket, url, out var nngDialer, default);
             ErrorHandler.ThrowIfError(errorCode);
-            _dialers.Add(dialerId);
+            _dialers.Add(nngDialer);
         }
 
         public void Send(string data)
@@ -61,7 +59,7 @@ namespace NngSharp.Sockets
             {
                 fixed (byte* ptr = bytes)
                 {
-                    errorCode = NativeMethods.nng_send(_id, (IntPtr)ptr, (UIntPtr)size, default);
+                    errorCode = NativeMethods.nng_send(_nngSocket, (IntPtr)ptr, (UIntPtr)size, default);
                 }
             }
 
@@ -84,13 +82,13 @@ namespace NngSharp.Sockets
             }
             encoding.GetBytes(data, span); // now ptr contains the string data
 
-            var errorCode = NativeMethods.nng_send(_id, ptr, (UIntPtr)size, NativeMethods.NngFlags.Allocate);
+            var errorCode = NativeMethods.nng_send(_nngSocket, ptr, (UIntPtr)size, NativeMethods.NngFlags.Allocate);
             ErrorHandler.ThrowIfError(errorCode);
         }
 
         public void SendMessage(Message message)
         {
-            var errorCode = NativeMethods.nng_sendmsg(_id, message, default);
+            var errorCode = NativeMethods.nng_sendmsg(_nngSocket, message, default);
             ErrorHandler.ThrowIfError(errorCode);
         }
 
@@ -104,7 +102,7 @@ namespace NngSharp.Sockets
             {
                 fixed (byte* ptr = bytes)
                 {
-                    errorCode = NativeMethods.nng_recv(_id, (IntPtr)ptr, ref sizePtr, default);
+                    errorCode = NativeMethods.nng_recv(_nngSocket, (IntPtr)ptr, ref sizePtr, default);
                 }
             }
             ErrorHandler.ThrowIfError(errorCode);
@@ -116,7 +114,7 @@ namespace NngSharp.Sockets
         {
             // get the pointer from NNG and use a span to read the string data
 
-            var errorCode = NativeMethods.nng_recv(_id, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate);
+            var errorCode = NativeMethods.nng_recv(_nngSocket, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate);
             ErrorHandler.ThrowIfError(errorCode);
 
             ReadOnlySpan<byte> span;
@@ -130,14 +128,11 @@ namespace NngSharp.Sockets
 
         public Message ReceiveMessage()
         {
-            var errorCode = NativeMethods.nng_recvmsg(_id, out var messagePtr, default);
+            var errorCode = NativeMethods.nng_recvmsg(_nngSocket, out var nngMessage, default);
             ErrorHandler.ThrowIfError(errorCode);
 
-            return new Message(messagePtr);
+            return new Message(nngMessage);
         }
-
-        public delegate NngErrorCode
-            OpenSocket(out uint id); // common method signature for opening a socket using NativeMethods
     }
 }
 

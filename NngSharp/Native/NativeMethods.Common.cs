@@ -11,6 +11,6 @@ namespace NngSharp.Native
         public static extern IntPtr nng_alloc(UIntPtr size);
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
-        public static extern IntPtr nng_strerror([MarshalAs(UnmanagedType.I4)] NngErrorCode errorCode);
+        public static extern IntPtr nng_strerror(NngErrorCode errorCode);
     }
 }

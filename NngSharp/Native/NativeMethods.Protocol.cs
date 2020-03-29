@@ -7,9 +7,11 @@ namespace NngSharp.Native
     internal static partial class NativeMethods
     {
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
-        public static extern NngErrorCode nng_pair0_open(out uint socket);
+        public static extern NngErrorCode nng_pair0_open(out NngSocket nngSocket);
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
-        public static extern NngErrorCode nng_pub0_open(out uint socket);
+        public static extern NngErrorCode nng_pub0_open(out NngSocket nngSocket);
     }
+
+    public delegate NngErrorCode OpenSocket(out NngSocket nngSocket); // common method signature for opening a socket using NativeMethods
 }

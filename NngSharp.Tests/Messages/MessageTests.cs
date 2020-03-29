@@ -21,7 +21,7 @@ namespace NngSharp.Tests.Messages
             message.Dispose();
 
             Assert.Equal(0, message.Length);
-            Assert.Empty(message.Body.ToArray());
+            Assert.Equal(0, message.Body.Length);
         }
 
         [Fact]
