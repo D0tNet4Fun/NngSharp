@@ -30,5 +30,8 @@ namespace NngSharp.Native
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern NngErrorCode nng_sendmsg(uint socket, IntPtr message, NngFlags flags);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern NngErrorCode nng_recvmsg(uint socket, out IntPtr message, NngFlags flags);
     }
 }

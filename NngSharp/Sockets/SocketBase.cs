@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using NngSharp.Messages;
 using NngSharp.Native;
 
 namespace NngSharp.Sockets
@@ -87,6 +88,12 @@ namespace NngSharp.Sockets
             ErrorHandler.ThrowIfError(errorCode);
         }
 
+        public void SendMessage(Message message)
+        {
+            var errorCode = NativeMethods.nng_sendmsg(_id, message, default);
+            ErrorHandler.ThrowIfError(errorCode);
+        }
+
         public string Receive()
         {
             var bytes = new byte[1024];
@@ -119,6 +126,14 @@ namespace NngSharp.Sockets
             }
 
             return Encoding.UTF8.GetString(span);
+        }
+
+        public Message ReceiveMessage()
+        {
+            var errorCode = NativeMethods.nng_recvmsg(_id, out var messagePtr, default);
+            ErrorHandler.ThrowIfError(errorCode);
+
+            return new Message(messagePtr);
         }
 
         public delegate NngErrorCode

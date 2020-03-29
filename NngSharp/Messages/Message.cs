@@ -3,7 +3,7 @@ using NngSharp.Native;
 
 namespace NngSharp.Messages
 {
-    public class Message : IDisposable
+    public class Message : IEquatable<Message>, IDisposable
     {
         private IntPtr _messagePtr;
 
@@ -11,6 +11,11 @@ namespace NngSharp.Messages
         {
             var errorCode = NativeMethods.nng_msg_alloc(out _messagePtr, (UIntPtr)sizeInBytes);
             ErrorHandler.ThrowIfError(errorCode);
+        }
+
+        public Message(IntPtr ptr)
+        {
+            _messagePtr = ptr;
         }
 
         public void Dispose()
@@ -21,6 +26,8 @@ namespace NngSharp.Messages
                 _messagePtr = default;
             }
         }
+
+        public bool Equals(Message other) => _messagePtr == other?._messagePtr;
 
         public int Length => (int)NativeMethods.nng_msg_len(_messagePtr);
 
@@ -37,6 +44,10 @@ namespace NngSharp.Messages
         }
 
         public static implicit operator Span<byte>(Message message) => message.Body;
+
+        public static implicit operator ReadOnlySpan<byte>(Message message) => message.Body;
+
+        public static implicit operator IntPtr(Message message) => message._messagePtr;
 
         public void Insert(ReadOnlySpan<byte> data) => UpdateBody(data, NativeMethods.nng_msg_insert);
 
