@@ -90,6 +90,12 @@ namespace NngSharp.Sockets
             ErrorHandler.ThrowIfError(errorCode);
         }
 
+        public void SendMessage<T>(Message<T> message)
+            where T : struct
+        {
+            SendMessage((Message)message);
+        }
+
         public string Receive()
         {
             var bytes = new byte[1024];
@@ -130,6 +136,13 @@ namespace NngSharp.Sockets
             ErrorHandler.ThrowIfError(errorCode);
 
             return new Message(nngMessage);
+        }
+
+        public Message<T> ReceiveMessage<T>()
+            where T : struct
+        {
+            var message = ReceiveMessage();
+            return new Message<T>(message);
         }
     }
 }

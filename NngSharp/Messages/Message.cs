@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using NngSharp.Native;
 
 namespace NngSharp.Messages
@@ -32,15 +33,16 @@ namespace NngSharp.Messages
 
         public int Length => _isDisposed ? 0 : (int)NativeMethods.nng_msg_len(_nngMessage);
 
+        public IntPtr BodyPtr => NativeMethods.nng_msg_body(_nngMessage);
+
         public Span<byte> Body
         {
             get
             {
                 if (_isDisposed) return Span<byte>.Empty;
-                var ptr = NativeMethods.nng_msg_body(_nngMessage);
                 unsafe
                 {
-                    return new Span<byte>(ptr.ToPointer(), Length);
+                    return new Span<byte>(BodyPtr.ToPointer(), Length);
                 }
             }
         }
@@ -69,5 +71,26 @@ namespace NngSharp.Messages
         }
 
         public void Clear() => NativeMethods.nng_msg_clear(_nngMessage);
+    }
+
+    public class Message<T> : Message
+        where T : struct
+    {
+        public Message(T value)
+            : base(Marshal.SizeOf(value))
+        {
+            Value = value;
+        }
+
+        public Message(NngMsg nngMessage)
+            : base(nngMessage)
+        {
+        }
+
+        public T Value
+        {
+            get => Marshal.PtrToStructure<T>(BodyPtr);
+            set => Marshal.StructureToPtr(value, BodyPtr, false);
+        }
     }
 }
