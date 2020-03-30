@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Text;
 using NngSharp.Messages;
 using NngSharp.Sockets;
@@ -83,6 +84,30 @@ namespace NngSharp.Tests.Sockets
             var receivedData = message2.Value;
             Assert.Equal(data, receivedData);
         }
+
+        [Fact]
+        public void SendMessage_And_ReceiveMessage_Class()
+        {
+            // arrange
+            var url = "inproc://here";
+            using var server = new PairSocket();
+            server.Listen(url);
+            using var client = new PairSocket();
+            client.Dial(url);
+
+            var data = new SmartPoint { x = 1, y = 2, z = 3, t = 4 };
+            var message1 = new GenericMessage<SmartPoint>(180);
+            message1.Value = data;
+
+            // act
+            client.SendMessage(message1);
+            var message2 = server.ReceiveGenericMessage<SmartPoint>();
+
+            // assert
+            Assert.Equal(180, message2.Length);
+            var receivedData = message2.Value;
+            Assert.Equal(data, receivedData);
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -105,6 +130,39 @@ namespace NngSharp.Tests.Sockets
         public override int GetHashCode()
         {
             return HashCode.Combine(x, y, z);
+        }
+    }
+
+    [DataContract]
+    class SmartPoint : IEquatable<SmartPoint>
+    {
+        [DataMember]
+        public int x;
+        [DataMember]
+        public int y;
+        [DataMember]
+        public int z;
+        [DataMember]
+        public int t;
+
+        public bool Equals(SmartPoint other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return x == other.x && y == other.y && z == other.z && t == other.t;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((SmartPoint) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(x, y, z, t);
         }
     }
 }

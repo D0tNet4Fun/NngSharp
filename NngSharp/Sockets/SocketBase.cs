@@ -144,6 +144,12 @@ namespace NngSharp.Sockets
             var message = ReceiveMessage();
             return new Message<T>(message);
         }
+
+        public GenericMessage<T> ReceiveGenericMessage<T>()
+        {
+            var message = ReceiveMessage();
+            return new GenericMessage<T>(message);
+        }
     }
 }
 
