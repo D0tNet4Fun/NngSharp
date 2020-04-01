@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using NngSharp.Messages;
+using NngSharp.Data;
 using NngSharp.Native;
+using Buffer = NngSharp.Data.Buffer;
 
 namespace NngSharp.Sockets
 {
@@ -46,42 +47,19 @@ namespace NngSharp.Sockets
             _dialers.Add(nngDialer);
         }
 
-        public void Send(string data)
+        public void Send(Buffer buffer)
         {
-            var encoding = Encoding.UTF8;
-            var size = encoding.GetByteCount(data);
-            var bytes = encoding.GetBytes(data);
-
-            NngErrorCode errorCode;
-            unsafe
-            {
-                fixed (byte* ptr = bytes)
-                {
-                    errorCode = NativeMethods.nng_send(_nngSocket, (IntPtr)ptr, (UIntPtr)size, default);
-                }
-            }
-
+            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, default);
             ErrorHandler.ThrowIfError(errorCode);
         }
 
-        public void SendZeroCopy(string data)
+        public void SendZeroCopy(ZeroCopyBuffer buffer)
         {
-            // allocate memory in NNG and use a span to update it with string data
-
-            var encoding = Encoding.UTF8;
-            var size = encoding.GetByteCount(data);
-
-            var ptr = NativeMethods.nng_alloc((UIntPtr)size);
-
-            Span<byte> span;
-            unsafe
-            {
-                span = new Span<byte>(ptr.ToPointer(), size);
-            }
-            encoding.GetBytes(data, span); // now ptr contains the string data
-
-            var errorCode = NativeMethods.nng_send(_nngSocket, ptr, (UIntPtr)size, NativeMethods.NngFlags.Allocate);
+            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Allocate);
             ErrorHandler.ThrowIfError(errorCode);
+            // from doc: data is "owned" by the function, and it will assume responsibility for calling nng_free() when it is no longer needed.
+            // clear the data to mark it as no longer needed
+            buffer.Clear();
         }
 
         public void SendMessage(Message message)
@@ -96,38 +74,23 @@ namespace NngSharp.Sockets
             SendMessage((Message)message);
         }
 
-        public string Receive()
+        public Buffer Receive()
         {
-            var bytes = new byte[1024];
+            var buffer = new Buffer(128); // todo 
 
-            var sizePtr = (UIntPtr)bytes.Length;
-            NngErrorCode errorCode;
-            unsafe
-            {
-                fixed (byte* ptr = bytes)
-                {
-                    errorCode = NativeMethods.nng_recv(_nngSocket, (IntPtr)ptr, ref sizePtr, default);
-                }
-            }
+            var sizePtr = (UIntPtr)buffer.Length;
+            var errorCode = NativeMethods.nng_recv(_nngSocket, buffer.Ptr, ref sizePtr, default);
             ErrorHandler.ThrowIfError(errorCode);
-
-            return Encoding.UTF8.GetString(bytes, 0, (int)sizePtr);
+            
+            buffer.Length = (int)sizePtr;
+            return buffer;
         }
 
-        public string ReceiveZeroCopy()
+        public ZeroCopyBuffer ReceiveZeroCopy()
         {
-            // get the pointer from NNG and use a span to read the string data
-
             var errorCode = NativeMethods.nng_recv(_nngSocket, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate);
             ErrorHandler.ThrowIfError(errorCode);
-
-            ReadOnlySpan<byte> span;
-            unsafe
-            {
-                span = new ReadOnlySpan<byte>(ptr.ToPointer(), (int)sizePtr);
-            }
-
-            return Encoding.UTF8.GetString(span);
+            return new ZeroCopyBuffer(ptr, (int)sizePtr);
         }
 
         public Message ReceiveMessage()

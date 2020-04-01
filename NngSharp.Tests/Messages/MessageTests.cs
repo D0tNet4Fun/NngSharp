@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-using NngSharp.Messages;
+using NngSharp.Data;
 using Xunit;
 
 namespace NngSharp.Tests.Messages

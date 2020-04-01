@@ -1,9 +1,8 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Runtime.Serialization;
 using NngSharp.Native;
 
-namespace NngSharp.Messages
+namespace NngSharp.Data
 {
     public class GenericMessage<T> : Message
     {

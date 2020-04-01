@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using NngSharp.Native;
 
-namespace NngSharp.Messages
+namespace NngSharp.Data
 {
     public class Message : IEquatable<Message>, IDisposable
     {

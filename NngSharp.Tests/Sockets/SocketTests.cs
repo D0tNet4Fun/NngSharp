@@ -2,40 +2,82 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
-using NngSharp.Messages;
+using FluentAssertions;
+using NngSharp.Data;
 using NngSharp.Sockets;
 using Xunit;
+using Buffer = NngSharp.Data.Buffer;
 
 namespace NngSharp.Tests.Sockets
 {
     public class SocketTests
     {
         [Fact]
-        public void Send_And_Receive()
+        public void Send_And_Receive_String()
         {
-            using var sender = new PairSocket();
-            using var receiver = new PairSocket();
+            using var server = new PairSocket();
+            using var client = new PairSocket();
             var url = "inproc://here";
-            sender.Listen(url);
-            receiver.Dial(url);
-            sender.Send("hello!");
-            var result = receiver.Receive();
+            server.Listen(url);
+            client.Dial(url);
 
-            Assert.Equal("hello!", result);
+            var buffer = new Buffer();
+            buffer.SetString("hello!");
+            client.Send(buffer);
+            
+            var buffer2 = server.Receive();
+            buffer2.GetString().Should().Be("hello!");
+        }
+
+        [Fact]
+        public void Send_And_Receive_Struct()
+        {
+            using var server = new PairSocket();
+            using var client = new PairSocket();
+            var url = "inproc://here";
+            server.Listen(url);
+            client.Dial(url);
+
+            var @struct = new Point {x = 1, y = 2, z = 3};
+            var buffer = new Buffer();
+            buffer.SetStruct(@struct);
+            client.Send(buffer);
+            
+            var buffer2 = server.Receive();
+            var result = buffer2.GetStruct<Point>();
+
+            Assert.Equal(@struct, result);
         }
 
         [Fact]
         public void SendZeroCopy_And_ReceiveZeroCopy()
         {
-            using var sender = new PairSocket();
-            using var receiver = new PairSocket();
+            using var server = new PairSocket();
+            using var client = new PairSocket();
             var url = "inproc://here";
-            sender.Listen(url);
-            receiver.Dial(url);
-            sender.SendZeroCopy("hello!");
-            var result = receiver.ReceiveZeroCopy();
+            server.Listen(url);
+            client.Dial(url);
 
-            Assert.Equal("hello!", result);
+            var encoding = Encoding.UTF8;
+
+            using (var buffer = new ZeroCopyBuffer())
+            {
+                buffer.SetString("hello!");
+                client.SendZeroCopy(buffer);
+                Assert.Equal(0, buffer.Length);
+            }
+
+            using (var serverBuffer = server.ReceiveZeroCopy())
+            {
+                Assert.Equal("hello!", serverBuffer.GetString(encoding));
+                serverBuffer.SetString("hi!", encoding);
+                server.SendZeroCopy(serverBuffer);
+            }
+
+            using (var buffer = client.ReceiveZeroCopy())
+            {
+                Assert.Equal("hi!", buffer.GetString(encoding));
+            }
         }
 
         [Fact]
