@@ -1,28 +1,16 @@
 ﻿using System;
 using FluentAssertions;
-using NngSharp.Data;
 using Xunit;
+using Buffer = NngSharp.Data.Buffer;
 
 namespace NngSharp.Tests.Data
 {
-    public class ZeroCopyBufferTests
+    public class BufferTests
     {
         [Fact]
         public void Constructor()
         {
-            var buffer = new ZeroCopyBuffer();
-            buffer.Ptr.Should().Be(IntPtr.Zero);
-            buffer.Capacity.Should().Be(0);
-            buffer.Length.Should().Be(0);
-        }
-
-        [Fact]
-        public void Dispose()
-        {
-            var buffer = new ZeroCopyBuffer();
-            buffer.Allocate(5);
-            buffer.Ptr.Should().NotBe(IntPtr.Zero);
-            buffer.Dispose();
+            var buffer = new Buffer();
             buffer.Ptr.Should().Be(IntPtr.Zero);
             buffer.Capacity.Should().Be(0);
             buffer.Length.Should().Be(0);
@@ -31,8 +19,9 @@ namespace NngSharp.Tests.Data
         [Fact]
         public void Allocate()
         {
-            var buffer = new ZeroCopyBuffer();
+            var buffer = new Buffer();
             buffer.Allocate(5);
+            buffer.Ptr.Should().NotBe(IntPtr.Zero);
             buffer.Capacity.Should().Be(5);
             buffer.Length.Should().Be(5);
         }
@@ -40,7 +29,7 @@ namespace NngSharp.Tests.Data
         [Fact]
         public void Allocate_Again_When_No_Extra_Memory_Is_Needed()
         {
-            var buffer = new ZeroCopyBuffer();
+            var buffer = new Buffer();
             buffer.Allocate(5);
             buffer.Capacity.Should().Be(5);
             var ptr1 = buffer.Ptr;
@@ -53,7 +42,7 @@ namespace NngSharp.Tests.Data
         [Fact]
         public void Allocate_Again_When_Extra_Memory_Is_Needed()
         {
-            var buffer = new ZeroCopyBuffer();
+            var buffer = new Buffer();
             buffer.Allocate(3);
             buffer.Capacity.Should().Be(3);
             var ptr1 = buffer.Ptr;

@@ -9,10 +9,11 @@ namespace NngSharp.Data
         {
         }
 
-        internal ZeroCopyBuffer(IntPtr ptr, int length)
+        internal ZeroCopyBuffer(IntPtr ptr, int capacity)
         {
             Ptr = ptr;
-            Capacity = Length = length;
+            Capacity = capacity;
+            Length = capacity;
         }
 
         public void Dispose()
@@ -24,31 +25,27 @@ namespace NngSharp.Data
         }
 
         public IntPtr Ptr { get; private set; }
-        public int Length { get; private set; }
+        public int Length { get; set; }
         public int Capacity { get; private set; }
 
-        public void Allocate(in int length)
+        public void Allocate(int capacity)
         {
-            if (Capacity > length)
-            {
-                // memory is already allocated
-                Length = length;
-                return;
-            }
+            if (Capacity > capacity) return; // memory is already allocated
+
             // free existing memory and allocate new one
             if (Ptr != IntPtr.Zero) FreeMemory();
-            Ptr = NativeMethods.nng_alloc((UIntPtr)length);
-            Capacity = Length = length;
+            Ptr = NativeMethods.nng_alloc((UIntPtr)capacity);
+            Capacity = capacity;
+            Length = capacity;
         }
 
-        private void FreeMemory() => NativeMethods.nng_free(Ptr, (UIntPtr)Length);
+        private void FreeMemory() => NativeMethods.nng_free(Ptr, (UIntPtr)Capacity);
 
         internal void Clear()
         {
             Ptr = IntPtr.Zero;
-            Capacity = Length =  0;
+            Capacity = 0;
+            Length = 0;
         }
-
-        public unsafe Span<byte> Span => new Span<byte>(Ptr.ToPointer(), Length);
     }
 }

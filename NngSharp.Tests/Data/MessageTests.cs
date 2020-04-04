@@ -3,28 +3,64 @@ using FluentAssertions;
 using NngSharp.Data;
 using Xunit;
 
-namespace NngSharp.Tests.Messages
+namespace NngSharp.Tests.Data
 {
     public class MessageTests
     {
         [Fact]
-        public void Dispose()
+        public void Constructor()
         {
             var message = new Message();
-            message.Dispose();
-
             message.Ptr.Should().Be(IntPtr.Zero);
+            message.Capacity.Should().Be(0);
             message.Length.Should().Be(0);
         }
 
         [Fact]
-        public void SetString_And_GetString()
+        public void Dispose()
+        {
+            var message = new Message();
+            message.Allocate(5);
+            message.Dispose();
+
+            message.Ptr.Should().Be(IntPtr.Zero);
+            message.Capacity.Should().Be(0);
+            message.Length.Should().Be(0);
+        }
+
+        [Fact]
+        public void Allocate()
         {
             using var message = new Message();
-            message.SetString("hello world");
+            message.Allocate(5);
+            message.Capacity.Should().Be(5);
+            message.Length.Should().Be(5);
+        }
 
-            var result = message.GetString();
-            result.Should().Be("hello world");
+        [Fact]
+        public void Allocate_Again_When_No_Extra_Memory_Is_Needed()
+        {
+            using var message = new Message();
+            message.Allocate(5);
+            message.Capacity.Should().Be(5);
+            var ptr1 = message.Ptr;
+            message.Allocate(3);
+            message.Capacity.Should().Be(5);
+            var ptr2 = message.Ptr;
+            ptr2.Should().Be(ptr1);
+        }
+
+        [Fact]
+        public void Allocate_Again_When_Extra_Memory_Is_Needed()
+        {
+            using var message = new Message();
+            message.Allocate(3);
+            message.Capacity.Should().Be(3);
+            var ptr1 = message.Ptr;
+            message.Allocate(5);
+            message.Capacity.Should().Be(5);
+            var ptr2 = message.Ptr;
+            ptr2.Should().Be(ptr1, "because this is what nng_msg_realloc does when possible");
         }
 
         //[Fact]

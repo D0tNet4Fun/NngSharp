@@ -13,26 +13,24 @@ namespace NngSharp.Data
 
         internal Buffer(int capacity)
         {
+            if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity), "Capacity must be positive");
             _bytes = new byte[capacity];
-            Length = _bytes.Length;
+            Length = capacity;
         }
 
-        public unsafe IntPtr Ptr => Capacity == 0 ? IntPtr.Zero : (IntPtr) Unsafe.AsPointer(ref _bytes[0]);
+        public unsafe IntPtr Ptr => _bytes != null ? (IntPtr)Unsafe.AsPointer(ref _bytes[0]) : IntPtr.Zero;
         public int Length { get; set; }
+
         public int Capacity => _bytes?.Length ?? 0;
 
-        public void Allocate(in int length)
+        public void Allocate(int capacity)
         {
-            if (Capacity > length)
+            if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity), "Capacity must be positive");
+            if (_bytes == null || _bytes.Length < capacity)
             {
-                // memory is already allocated
-                Length = length;
-                return;
+                _bytes = new byte[capacity];
             }
-            _bytes = new byte[length];
-            Length = length;
+            Length = capacity;
         }
-
-        public unsafe Span<byte> Span => new Span<byte>(Ptr.ToPointer(), Length);
     }
 }

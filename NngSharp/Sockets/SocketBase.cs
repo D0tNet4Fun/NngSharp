@@ -117,7 +117,8 @@ namespace NngSharp.Sockets
                 return false;
             }
             ErrorHandler.ThrowIfError(errorCode);
-            buffer.Length = (int) sizePtr;
+
+            buffer.Length = (int)sizePtr;
             return true;
         }
 

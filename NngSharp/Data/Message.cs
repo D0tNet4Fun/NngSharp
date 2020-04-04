@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using NngSharp.Native;
 
 namespace NngSharp.Data
@@ -7,7 +6,7 @@ namespace NngSharp.Data
     public class Message : IMemory, IDisposable
     {
         private NngMsg _nngMessage;
-        private bool _isMemoryAllocated;
+        private int _length;
 
         public Message()
         {
@@ -16,38 +15,72 @@ namespace NngSharp.Data
         internal Message(NngMsg nngMessage)
         {
             _nngMessage = nngMessage;
-            _isMemoryAllocated = true;
+            UpdateState();
         }
 
         public void Dispose()
         {
-            if (!_isMemoryAllocated) return;
+            if (Capacity == 0) return;
 
             NativeMethods.nng_msg_free(_nngMessage);
             _nngMessage = default;
-            _isMemoryAllocated = false;
+            Ptr = IntPtr.Zero;
+            Capacity = 0;
+            _length = 0;
         }
 
-        public int Length => _isMemoryAllocated ? (int) NativeMethods.nng_msg_len(_nngMessage) : 0;
+        public int Capacity { get; private set; }
 
-        public IntPtr Ptr => _isMemoryAllocated ? NativeMethods.nng_msg_body(_nngMessage) : IntPtr.Zero;
+        public IntPtr Ptr { get; private set; }
 
-        public unsafe Span<byte> Span => new Span<byte>(Ptr.ToPointer(), Length);
+        public int Length
+        {
+            get => _length;
+            set
+            {
+                var toChop = Capacity - value;
+                if (toChop > 0)
+                {
+                    var errorCode = NativeMethods.nng_msg_chop(_nngMessage, (UIntPtr)toChop);
+                    ErrorHandler.ThrowIfError(errorCode);
+                }
+                _length = value;
+            }
+        }
 
         public static implicit operator NngMsg(Message message) => message._nngMessage;
 
-        public void Allocate(in int length)
+        public void Allocate(int capacity)
         {
-            if(_isMemoryAllocated) throw new NotImplementedException();
+            // either allocate new memory or reallocate more memory
+            
+            if (Capacity == 0)
+            {
+                var errorCode = NativeMethods.nng_msg_alloc(out _nngMessage, (UIntPtr)capacity);
+                ErrorHandler.ThrowIfError(errorCode);
+                UpdateState();
+                return;
+            }
 
-            var errorCode = NativeMethods.nng_msg_alloc(out _nngMessage, (UIntPtr)length);
-            ErrorHandler.ThrowIfError(errorCode);
-            _isMemoryAllocated = true;
+            if (Capacity < capacity)
+            {
+                var errorCode = NativeMethods.nng_msg_realloc(_nngMessage, (UIntPtr)capacity);
+                ErrorHandler.ThrowIfError(errorCode);
+                UpdateState();
+            }
         }
 
         public void Clear()
         {
             NativeMethods.nng_msg_clear(_nngMessage);
+            UpdateState();
+        }
+
+        private void UpdateState()
+        {
+            Ptr = NativeMethods.nng_msg_body(_nngMessage);
+            _length = (int)NativeMethods.nng_msg_len(_nngMessage);
+            Capacity = _length;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Json;
 using System.Text;
 
 namespace NngSharp.Data
@@ -33,24 +34,35 @@ namespace NngSharp.Data
             return Marshal.PtrToStructure<T>(memory.Ptr);
         }
 
-        public static void SetDataContract<T>(this IMemory memory, T value)
+        public static void SetDataContract<T>(this IMemory memory, T value) => SetDataContract(memory, value, new DataContractJsonSerializer(typeof(T)));
+
+        public static void SetDataContract<T>(this IMemory memory, T value, DataContractJsonSerializer serializer)
         {
-            throw new NotImplementedException();
-            //unsafe
-            //{
-            //    using var stream = new UnmanagedMemoryStream((byte*)BodyPtr.ToPointer(), Length, Length, FileAccess.Write);
-            //    _serializer.WriteObject(stream, value);
-            //}
+            var capacity = 128; // todo
+            memory.Allocate(capacity);
+            while (true)
+            {
+                using var stream = memory.GetWriteStream();
+                try
+                {
+                    serializer.WriteObject(stream, value);
+                }
+                catch (NotSupportedException)
+                {
+                    memory.Allocate(capacity *= 2);
+                    continue;
+                }
+                memory.Length = checked((int)stream.Position);
+                break;
+            }
         }
 
-        public static T GetDataContract<T>(this IMemory memory)
+        public static T GetDataContract<T>(this IMemory memory) => GetDataContract<T>(memory, new DataContractJsonSerializer(typeof(T)));
+
+        public static T GetDataContract<T>(this IMemory memory, DataContractJsonSerializer serializer)
         {
-            throw new NotImplementedException();
-            //unsafe
-            //{
-            //    using var stream = new UnmanagedMemoryStream((byte*)BodyPtr.ToPointer(), Length, Length, FileAccess.Read);
-            //    return (T)_serializer.ReadObject(stream);
-            //}
+            using var stream = memory.GetReadStream();
+            return (T)serializer.ReadObject(stream);
         }
     }
 }

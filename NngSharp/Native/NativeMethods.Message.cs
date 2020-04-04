@@ -14,10 +14,16 @@ namespace NngSharp.Native
         public static extern void nng_msg_free(NngMsg nngMessage);
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern NngErrorCode nng_msg_realloc(NngMsg msg, UIntPtr size);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern NngErrorCode nng_msg_append(NngMsg nngMessage, IntPtr value, UIntPtr size);
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern NngErrorCode nng_msg_insert(NngMsg nngMessage, IntPtr value, UIntPtr size);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern NngErrorCode nng_msg_chop(NngMsg nngMessage, UIntPtr size);
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern void nng_msg_clear(NngMsg nngMessage);
