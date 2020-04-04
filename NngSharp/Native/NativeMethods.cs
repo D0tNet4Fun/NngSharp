@@ -1,7 +1,10 @@
-﻿namespace NngSharp.Native
+﻿using System;
+
+namespace NngSharp.Native
 {
     internal static partial class NativeMethods
     {
+        [Flags]
         internal enum NngFlags
         {
             None = 0,

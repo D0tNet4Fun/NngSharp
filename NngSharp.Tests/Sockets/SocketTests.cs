@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Threading.Tasks;
 using FluentAssertions;
 using NngSharp.Data;
 using NngSharp.Sockets;
@@ -50,6 +51,26 @@ namespace NngSharp.Tests.Sockets
         }
 
         [Fact]
+        public async Task TrySend_And_TryReceive_String()
+        {
+            using var server = new PairSocket();
+            using var client = new PairSocket();
+            var url = "inproc://here";
+            server.Listen(url);
+            client.Dial(url);
+
+            var buffer = new Buffer();
+            buffer.SetString("hello!");
+            var sent = client.TrySend(buffer);
+            sent.Should().BeTrue();
+
+            await Task.Delay(1000);
+            var received = server.TryReceive(out var buffer2);
+            received.Should().BeTrue();
+            buffer2.GetString().Should().Be("hello!");
+        }
+
+        [Fact]
         public void SendZeroCopy_And_ReceiveZeroCopy()
         {
             using var server = new PairSocket();
@@ -77,6 +98,46 @@ namespace NngSharp.Tests.Sockets
             using (var buffer = client.ReceiveZeroCopy())
             {
                 Assert.Equal("hi!", buffer.GetString(encoding));
+            }
+        }
+
+        [Fact]
+        public async Task TrySendZeroCopy_And_TryReceiveZeroCopy()
+        {
+            using var server = new PairSocket();
+            using var client = new PairSocket();
+            var url = "inproc://here";
+            server.Listen(url);
+            client.Dial(url);
+
+            var encoding = Encoding.UTF8;
+            bool sent, received;
+
+            using (var buffer = new ZeroCopyBuffer())
+            {
+                buffer.SetString("hello!");
+                sent = client.TrySendZeroCopy(buffer);
+                buffer.Length.Should().Be(0);
+                sent.Should().BeTrue();
+            }
+
+            await Task.Delay(1000);
+            received = server.TryReceiveZeroCopy(out var serverBuffer);
+            received.Should().BeTrue();
+            using (serverBuffer)
+            {
+                serverBuffer.GetString(encoding).Should().Be("hello!");
+                serverBuffer.SetString("hi!", encoding);
+                sent = server.TrySendZeroCopy(serverBuffer);
+                sent.Should().BeTrue();
+            }
+            
+            await Task.Delay(1000);
+            received = client.TryReceiveZeroCopy(out var clientBuffer);
+            received.Should().BeTrue();
+            using(clientBuffer)
+            {
+                clientBuffer.GetString(encoding).Should().Be("hi!");
             }
         }
 

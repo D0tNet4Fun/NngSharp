@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using NngSharp.Data;
 using NngSharp.Native;
 using Buffer = NngSharp.Data.Buffer;
@@ -53,6 +54,19 @@ namespace NngSharp.Sockets
             ErrorHandler.ThrowIfError(errorCode);
         }
 
+        public bool TrySend(Buffer buffer)
+        {
+            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Async);
+            switch (errorCode)
+            {
+                case NngErrorCode.TryAgain:
+                    return false;
+                default:
+                    ErrorHandler.ThrowIfError(errorCode);
+                    return true; // only if success
+            }
+        }
+
         public void SendZeroCopy(ZeroCopyBuffer buffer)
         {
             var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Allocate);
@@ -60,6 +74,17 @@ namespace NngSharp.Sockets
             // from doc: data is "owned" by the function, and it will assume responsibility for calling nng_free() when it is no longer needed.
             // clear the data to mark it as no longer needed
             buffer.Clear();
+        }
+
+        public bool TrySendZeroCopy(ZeroCopyBuffer buffer)
+        {
+            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Async | NativeMethods.NngFlags.Allocate);
+            if (errorCode == NngErrorCode.TryAgain) return false;
+            ErrorHandler.ThrowIfError(errorCode);
+            // from doc: data is "owned" by the function, and it will assume responsibility for calling nng_free() when it is no longer needed.
+            // clear the data to mark it as no longer needed
+            buffer.Clear();
+            return true;
         }
 
         public void SendMessage(Message message)
@@ -81,9 +106,25 @@ namespace NngSharp.Sockets
             var sizePtr = (UIntPtr)buffer.Length;
             var errorCode = NativeMethods.nng_recv(_nngSocket, buffer.Ptr, ref sizePtr, default);
             ErrorHandler.ThrowIfError(errorCode);
-            
+
             buffer.Length = (int)sizePtr;
             return buffer;
+        }
+
+        public bool TryReceive(out Buffer buffer)
+        {
+            buffer = new Buffer(128); // todo 
+
+            var sizePtr = (UIntPtr)buffer.Length;
+            var errorCode = NativeMethods.nng_recv(_nngSocket, buffer.Ptr, ref sizePtr, NativeMethods.NngFlags.Async);
+            if (errorCode == NngErrorCode.TryAgain)
+            {
+                buffer = null;
+                return false;
+            }
+            ErrorHandler.ThrowIfError(errorCode);
+            buffer.Length = (int) sizePtr;
+            return true;
         }
 
         public ZeroCopyBuffer ReceiveZeroCopy()
@@ -91,6 +132,19 @@ namespace NngSharp.Sockets
             var errorCode = NativeMethods.nng_recv(_nngSocket, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate);
             ErrorHandler.ThrowIfError(errorCode);
             return new ZeroCopyBuffer(ptr, (int)sizePtr);
+        }
+
+        public bool TryReceiveZeroCopy(out ZeroCopyBuffer buffer)
+        {
+            var errorCode = NativeMethods.nng_recv(_nngSocket, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate | NativeMethods.NngFlags.Async);
+            if (errorCode == NngErrorCode.TryAgain)
+            {
+                buffer = null;
+                return false;
+            }
+            ErrorHandler.ThrowIfError(errorCode);
+            buffer = new ZeroCopyBuffer(ptr, (int)sizePtr);
+            return true;
         }
 
         public Message ReceiveMessage()
