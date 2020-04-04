@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace NngSharp.Data
@@ -27,8 +28,29 @@ namespace NngSharp.Data
         }
 
         public static T GetStruct<T>(this IMemory memory)
+            where T : struct
         {
             return Marshal.PtrToStructure<T>(memory.Ptr);
+        }
+
+        public static void SetDataContract<T>(this IMemory memory, T value)
+        {
+            throw new NotImplementedException();
+            //unsafe
+            //{
+            //    using var stream = new UnmanagedMemoryStream((byte*)BodyPtr.ToPointer(), Length, Length, FileAccess.Write);
+            //    _serializer.WriteObject(stream, value);
+            //}
+        }
+
+        public static T GetDataContract<T>(this IMemory memory)
+        {
+            throw new NotImplementedException();
+            //unsafe
+            //{
+            //    using var stream = new UnmanagedMemoryStream((byte*)BodyPtr.ToPointer(), Length, Length, FileAccess.Read);
+            //    return (T)_serializer.ReadObject(stream);
+            //}
         }
     }
 }

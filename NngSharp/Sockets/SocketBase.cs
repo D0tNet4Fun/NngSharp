@@ -93,12 +93,6 @@ namespace NngSharp.Sockets
             ErrorHandler.ThrowIfError(errorCode);
         }
 
-        public void SendMessage<T>(Message<T> message)
-            where T : struct
-        {
-            SendMessage((Message)message);
-        }
-
         public Buffer Receive()
         {
             var buffer = new Buffer(128); // todo 
@@ -153,19 +147,6 @@ namespace NngSharp.Sockets
             ErrorHandler.ThrowIfError(errorCode);
 
             return new Message(nngMessage);
-        }
-
-        public Message<T> ReceiveMessage<T>()
-            where T : struct
-        {
-            var message = ReceiveMessage();
-            return new Message<T>(message);
-        }
-
-        public GenericMessage<T> ReceiveGenericMessage<T>()
-        {
-            var message = ReceiveMessage();
-            return new GenericMessage<T>(message);
         }
     }
 }

@@ -4,93 +4,50 @@ using NngSharp.Native;
 
 namespace NngSharp.Data
 {
-    public class Message : IEquatable<Message>, IDisposable
+    public class Message : IMemory, IDisposable
     {
         private NngMsg _nngMessage;
-        private bool _isDisposed;
+        private bool _isMemoryAllocated;
 
-        public Message(int sizeInBytes = 0)
+        public Message()
         {
-            var errorCode = NativeMethods.nng_msg_alloc(out _nngMessage, (UIntPtr)sizeInBytes);
-            ErrorHandler.ThrowIfError(errorCode);
         }
 
-        public Message(NngMsg nngMessage)
+        internal Message(NngMsg nngMessage)
         {
             _nngMessage = nngMessage;
+            _isMemoryAllocated = true;
         }
 
         public void Dispose()
         {
-            if (_isDisposed) return;
+            if (!_isMemoryAllocated) return;
 
             NativeMethods.nng_msg_free(_nngMessage);
             _nngMessage = default;
-            _isDisposed = true;
+            _isMemoryAllocated = false;
         }
 
-        public bool Equals(Message other) => _nngMessage.Equals(other?._nngMessage);
+        public int Length => _isMemoryAllocated ? (int) NativeMethods.nng_msg_len(_nngMessage) : 0;
 
-        public int Length => _isDisposed ? 0 : (int)NativeMethods.nng_msg_len(_nngMessage);
+        public IntPtr Ptr => _isMemoryAllocated ? NativeMethods.nng_msg_body(_nngMessage) : IntPtr.Zero;
 
-        public IntPtr BodyPtr => NativeMethods.nng_msg_body(_nngMessage);
-
-        public Span<byte> Body
-        {
-            get
-            {
-                if (_isDisposed) return Span<byte>.Empty;
-                unsafe
-                {
-                    return new Span<byte>(BodyPtr.ToPointer(), Length);
-                }
-            }
-        }
-
-        public static implicit operator Span<byte>(Message message) => message.Body;
-
-        public static implicit operator ReadOnlySpan<byte>(Message message) => message.Body;
+        public unsafe Span<byte> Span => new Span<byte>(Ptr.ToPointer(), Length);
 
         public static implicit operator NngMsg(Message message) => message._nngMessage;
 
-        public void Insert(ReadOnlySpan<byte> data) => UpdateBody(data, NativeMethods.nng_msg_insert);
-
-        public void Append(ReadOnlySpan<byte> data) => UpdateBody(data, NativeMethods.nng_msg_append);
-
-        private void UpdateBody(ReadOnlySpan<byte> data, Func<NngMsg, IntPtr, UIntPtr, NngErrorCode> callback)
+        public void Allocate(in int length)
         {
-            NngErrorCode errorCode;
-            unsafe
-            {
-                fixed (byte* ptr = data)
-                {
-                    errorCode = callback(_nngMessage, (IntPtr)ptr, (UIntPtr)data.Length);
-                }
-            }
+            if(_isMemoryAllocated) throw new NotImplementedException();
+
+            var errorCode = NativeMethods.nng_msg_alloc(out _nngMessage, (UIntPtr)length);
             ErrorHandler.ThrowIfError(errorCode);
+            _isMemoryAllocated = true;
         }
 
-        public void Clear() => NativeMethods.nng_msg_clear(_nngMessage);
-    }
-
-    public class Message<T> : Message
-        where T : struct
-    {
-        public Message(T value)
-            : base(Marshal.SizeOf(value))
+        public void Clear()
         {
-            Value = value;
-        }
-
-        public Message(NngMsg nngMessage)
-            : base(nngMessage)
-        {
-        }
-
-        public T Value
-        {
-            get => Marshal.PtrToStructure<T>(BodyPtr);
-            set => Marshal.StructureToPtr(value, BodyPtr, false);
+            NativeMethods.nng_msg_clear(_nngMessage);
         }
     }
 }
