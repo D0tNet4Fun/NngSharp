@@ -4,20 +4,27 @@ using System.Text;
 using System.Threading.Tasks;
 using NngSharp.Data;
 using NngSharp.Native;
+using NngSharp.Sockets.Behaviors;
 using Buffer = NngSharp.Data.Buffer;
 
 namespace NngSharp.Sockets
 {
-    public class SocketBase : IDisposable
+    public class SocketBase : ISender, IReceiver, IDisposable
     {
         private NngSocket _nngSocket;
         private readonly List<NngListener> _listeners = new List<NngListener>();
         private readonly List<NngDialer> _dialers = new List<NngDialer>();
 
+        private readonly SocketSendBehavior _sender;
+        private readonly IReceiver _receiver;
+
         protected SocketBase(OpenSocket openSocket)
         {
             var errorCode = openSocket(out _nngSocket);
             ErrorHandler.ThrowIfError(errorCode);
+
+            _sender = new SocketSendBehavior(_nngSocket);
+            _receiver = new SocketReceiveBehavior(_nngSocket);
         }
 
         public void Dispose()
@@ -48,107 +55,27 @@ namespace NngSharp.Sockets
             _dialers.Add(nngDialer);
         }
 
-        public void Send(Buffer buffer)
-        {
-            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, default);
-            ErrorHandler.ThrowIfError(errorCode);
-        }
+        #region Send
 
-        public bool TrySend(Buffer buffer)
-        {
-            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Async);
-            switch (errorCode)
-            {
-                case NngErrorCode.TryAgain:
-                    return false;
-                default:
-                    ErrorHandler.ThrowIfError(errorCode);
-                    return true; // only if success
-            }
-        }
+        public void Send(Buffer buffer) => _sender.Send(buffer);
+        public bool TrySend(Buffer buffer) => _sender.TrySend(buffer);
+        public void SendZeroCopy(ZeroCopyBuffer buffer) => _sender.SendZeroCopy(buffer);
+        public bool TrySendZeroCopy(ZeroCopyBuffer buffer) => _sender.TrySendZeroCopy(buffer);
+        public void SendMessage(Message message) => _sender.SendMessage(message);
+        public bool TrySendMessage(Message message) => _sender.TrySendMessage(message);
 
-        public void SendZeroCopy(ZeroCopyBuffer buffer)
-        {
-            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Allocate);
-            ErrorHandler.ThrowIfError(errorCode);
-            // from doc: data is "owned" by the function, and it will assume responsibility for calling nng_free() when it is no longer needed.
-            // clear the data to mark it as no longer needed
-            buffer.Clear();
-        }
+        #endregion
 
-        public bool TrySendZeroCopy(ZeroCopyBuffer buffer)
-        {
-            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Async | NativeMethods.NngFlags.Allocate);
-            if (errorCode == NngErrorCode.TryAgain) return false;
-            ErrorHandler.ThrowIfError(errorCode);
-            // from doc: data is "owned" by the function, and it will assume responsibility for calling nng_free() when it is no longer needed.
-            // clear the data to mark it as no longer needed
-            buffer.Clear();
-            return true;
-        }
+        #region Receive
 
-        public void SendMessage(Message message)
-        {
-            var errorCode = NativeMethods.nng_sendmsg(_nngSocket, message, default);
-            ErrorHandler.ThrowIfError(errorCode);
-        }
+        public Buffer Receive() => _receiver.Receive();
+        public bool TryReceive(out Buffer buffer) => _receiver.TryReceive(out buffer);
+        public ZeroCopyBuffer ReceiveZeroCopy() => _receiver.ReceiveZeroCopy();
+        public bool TryReceiveZeroCopy(out ZeroCopyBuffer buffer) => _receiver.TryReceiveZeroCopy(out buffer);
+        public Message ReceiveMessage() => _receiver.ReceiveMessage();
+        public bool TryReceiveMessage(out Message message) => _receiver.TryReceiveMessage(out message);
 
-        public Buffer Receive()
-        {
-            var buffer = new Buffer(128); // todo 
-
-            var sizePtr = (UIntPtr)buffer.Length;
-            var errorCode = NativeMethods.nng_recv(_nngSocket, buffer.Ptr, ref sizePtr, default);
-            ErrorHandler.ThrowIfError(errorCode);
-
-            buffer.Length = (int)sizePtr;
-            return buffer;
-        }
-
-        public bool TryReceive(out Buffer buffer)
-        {
-            buffer = new Buffer(128); // todo 
-
-            var sizePtr = (UIntPtr)buffer.Length;
-            var errorCode = NativeMethods.nng_recv(_nngSocket, buffer.Ptr, ref sizePtr, NativeMethods.NngFlags.Async);
-            if (errorCode == NngErrorCode.TryAgain)
-            {
-                buffer = null;
-                return false;
-            }
-            ErrorHandler.ThrowIfError(errorCode);
-
-            buffer.Length = (int)sizePtr;
-            return true;
-        }
-
-        public ZeroCopyBuffer ReceiveZeroCopy()
-        {
-            var errorCode = NativeMethods.nng_recv(_nngSocket, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate);
-            ErrorHandler.ThrowIfError(errorCode);
-            return new ZeroCopyBuffer(ptr, (int)sizePtr);
-        }
-
-        public bool TryReceiveZeroCopy(out ZeroCopyBuffer buffer)
-        {
-            var errorCode = NativeMethods.nng_recv(_nngSocket, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate | NativeMethods.NngFlags.Async);
-            if (errorCode == NngErrorCode.TryAgain)
-            {
-                buffer = null;
-                return false;
-            }
-            ErrorHandler.ThrowIfError(errorCode);
-            buffer = new ZeroCopyBuffer(ptr, (int)sizePtr);
-            return true;
-        }
-
-        public Message ReceiveMessage()
-        {
-            var errorCode = NativeMethods.nng_recvmsg(_nngSocket, out var nngMessage, default);
-            ErrorHandler.ThrowIfError(errorCode);
-
-            return new Message(nngMessage);
-        }
+        #endregion
     }
 }
 
