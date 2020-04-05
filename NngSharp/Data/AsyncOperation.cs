@@ -63,5 +63,11 @@ namespace NngSharp.Data
         {
             NativeMethods.nng_aio_set_msg(_nngAio, message);
         }
+
+        public NngMsg GetMessage()
+        {
+            if(!Task.IsCompleted) throw new InvalidOperationException("Message is not available");
+            return NativeMethods.nng_aio_get_msg(_nngAio);
+        }
     }
 }

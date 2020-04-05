@@ -20,7 +20,13 @@ namespace NngSharp.Native
         public static extern void nng_aio_set_msg(NngAio aio, NngMsg message);
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern NngMsg nng_aio_get_msg(NngAio aio);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern void nng_send_aio(NngSocket socket, NngAio aio);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern void nng_recv_aio(NngSocket socket, NngAio aio);
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern void nng_aio_cancel(NngAio aio);

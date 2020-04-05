@@ -78,6 +78,7 @@ namespace NngSharp.Sockets
         public bool TryReceiveZeroCopy(out ZeroCopyBuffer buffer) => _receiver.TryReceiveZeroCopy(out buffer);
         public Message ReceiveMessage() => _receiver.ReceiveMessage();
         public bool TryReceiveMessage(out Message message) => _receiver.TryReceiveMessage(out message);
+        public Task<Message> ReceiveMessageAsync() => _receiver.ReceiveMessageAsync();
 
         #endregion
     }

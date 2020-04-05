@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using FluentAssertions;
 using NngSharp.Data;
 using NngSharp.Sockets;
@@ -87,6 +88,14 @@ namespace NngSharp.Tests.Sockets.Behaviors
             Send();
             var result = _behavior.TryReceiveMessage(out var message);
             result.Should().BeTrue();
+            Verify(message);
+        }
+
+        [Fact]
+        public async Task ReceiveMessageAsync()
+        {
+            Send();
+            var message = await _behavior.ReceiveMessageAsync();
             Verify(message);
         }
     }
