@@ -89,12 +89,10 @@ namespace NngSharp.Sockets.Behaviors
 
         public async Task<Message> ReceiveMessageAsync(CancellationToken cancellationToken)
         {
-            using (var asyncOperation = new AsyncOperation(cancellationToken))
-            {
-                NativeMethods.nng_recv_aio(_nngSocket, asyncOperation);
-                await asyncOperation.Task;
-                return new Message(asyncOperation.GetMessage());
-            }
+            using var asyncOperation = new AsyncOperation(cancellationToken);
+            NativeMethods.nng_recv_aio(_nngSocket, asyncOperation);
+            await asyncOperation.Task;
+            return new Message(asyncOperation.GetMessage());
         }
     }
 }

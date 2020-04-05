@@ -59,15 +59,8 @@ namespace NngSharp.Data
             }
         }
 
-        public void SetMessage(NngMsg message)
-        {
-            NativeMethods.nng_aio_set_msg(_nngAio, message);
-        }
+        public void SetMessage(NngMsg message) => NativeMethods.nng_aio_set_msg(_nngAio, message);
 
-        public NngMsg GetMessage()
-        {
-            if(!Task.IsCompleted) throw new InvalidOperationException("Message is not available");
-            return NativeMethods.nng_aio_get_msg(_nngAio);
-        }
+        public NngMsg GetMessage() => NativeMethods.nng_aio_get_msg(_nngAio);
     }
 }
