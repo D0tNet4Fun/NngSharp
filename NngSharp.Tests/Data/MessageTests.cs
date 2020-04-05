@@ -43,9 +43,11 @@ namespace NngSharp.Tests.Data
             using var message = new Message();
             message.Allocate(5);
             message.Capacity.Should().Be(5);
+            message.Length.Should().Be(5);
             var ptr1 = message.Ptr;
             message.Allocate(3);
             message.Capacity.Should().Be(5);
+            message.Length.Should().Be(3);
             var ptr2 = message.Ptr;
             ptr2.Should().Be(ptr1);
         }
@@ -56,9 +58,11 @@ namespace NngSharp.Tests.Data
             using var message = new Message();
             message.Allocate(3);
             message.Capacity.Should().Be(3);
+            message.Length.Should().Be(3);
             var ptr1 = message.Ptr;
             message.Allocate(5);
             message.Capacity.Should().Be(5);
+            message.Length.Should().Be(5);
             var ptr2 = message.Ptr;
             ptr2.Should().Be(ptr1, "because this is what nng_msg_realloc does when possible");
         }

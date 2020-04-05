@@ -30,12 +30,13 @@ namespace NngSharp.Data
 
         public void Allocate(int capacity)
         {
-            if (Capacity > capacity) return; // memory is already allocated
-
-            // free existing memory and allocate new one
-            if (Ptr != IntPtr.Zero) FreeMemory();
-            Ptr = NativeMethods.nng_alloc((UIntPtr)capacity);
-            Capacity = capacity;
+            if (Capacity < capacity)
+            {
+                // free existing memory and allocate new one
+                if (Ptr != IntPtr.Zero) FreeMemory();
+                Ptr = NativeMethods.nng_alloc((UIntPtr) capacity);
+                Capacity = capacity;
+            }
             Length = capacity;
         }
 

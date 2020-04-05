@@ -68,6 +68,10 @@ namespace NngSharp.Data
                 ErrorHandler.ThrowIfError(errorCode);
                 UpdateState();
             }
+            else
+            {
+                Length = capacity;
+            }
         }
 
         public void Clear()

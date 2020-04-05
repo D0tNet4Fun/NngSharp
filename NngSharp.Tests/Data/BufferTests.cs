@@ -32,9 +32,11 @@ namespace NngSharp.Tests.Data
             var buffer = new Buffer();
             buffer.Allocate(5);
             buffer.Capacity.Should().Be(5);
+            buffer.Length.Should().Be(5);
             var ptr1 = buffer.Ptr;
             buffer.Allocate(3);
             buffer.Capacity.Should().Be(5);
+            buffer.Length.Should().Be(3);
             var ptr2 = buffer.Ptr;
             ptr2.Should().Be(ptr1);
         }
@@ -45,9 +47,11 @@ namespace NngSharp.Tests.Data
             var buffer = new Buffer();
             buffer.Allocate(3);
             buffer.Capacity.Should().Be(3);
+            buffer.Length.Should().Be(3);
             var ptr1 = buffer.Ptr;
             buffer.Allocate(5);
             buffer.Capacity.Should().Be(5);
+            buffer.Length.Should().Be(5);
             var ptr2 = buffer.Ptr;
             ptr2.Should().NotBe(ptr1);
         }
