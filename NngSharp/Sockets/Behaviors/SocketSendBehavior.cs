@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using NngSharp.Data;
 using NngSharp.Native;
 using Buffer = NngSharp.Data.Buffer;
@@ -65,6 +66,17 @@ namespace NngSharp.Sockets.Behaviors
             if (errorCode == NngErrorCode.TryAgain) return false;
             ErrorHandler.ThrowIfError(errorCode);
             return true;
+        }
+
+        public async Task SendMessageAsync(Message message)
+        {
+            // ReSharper disable once ConvertToUsingDeclaration - does not work correctly with await (todo why??)
+            using (var asyncOperation = new AsyncOperation())
+            {
+                asyncOperation.SetMessage(message);
+                NativeMethods.nng_send_aio(_nngSocket, asyncOperation);
+                await asyncOperation.Task;
+            }
         }
     }
 }
