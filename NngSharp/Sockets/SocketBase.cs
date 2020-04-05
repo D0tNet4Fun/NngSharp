@@ -27,6 +27,8 @@ namespace NngSharp.Sockets
             _receiver = new SocketReceiveBehavior(_nngSocket);
         }
 
+        public static implicit operator NngSocket(SocketBase socket) => socket._nngSocket;
+
         public void Dispose()
         {
             var errorCode = NativeMethods.nng_close(_nngSocket);
