@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using NngSharp.Native;
 
@@ -11,15 +12,15 @@ namespace NngSharp.Data
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable - we don't want GC to collect it until AsyncOperation goes out of scope
         private readonly NngAioCallback _callback;
         private readonly TaskCompletionSource<object> _taskCompletionSource = new TaskCompletionSource<object>();
+        private readonly CancellationTokenRegistration _cancellationTokenRegistration;
 
-        public AsyncOperation()
+        public AsyncOperation(CancellationToken cancellationToken)
         {
             _callback = OnCompleted;
             var errorCode = NativeMethods.nng_aio_alloc(out _nngAio, _callback, IntPtr.Zero);
             ErrorHandler.ThrowIfError(errorCode);
+            _cancellationTokenRegistration = cancellationToken.Register(OnCancellationRequested);
         }
-
-        public Task Task => _taskCompletionSource.Task;
 
         public void Dispose()
         {
@@ -27,11 +28,19 @@ namespace NngSharp.Data
             {
                 throw new NotImplementedException(); // todo
             }
+            _cancellationTokenRegistration.Dispose();
             NativeMethods.nng_aio_free(_nngAio);
             _nngAio = default;
         }
 
         public static implicit operator NngAio(AsyncOperation op) => op._nngAio;
+
+        public Task Task => _taskCompletionSource.Task;
+
+        private void OnCancellationRequested()
+        {
+            NativeMethods.nng_aio_cancel(_nngAio);
+        }
 
         private void OnCompleted(IntPtr arg)
         {

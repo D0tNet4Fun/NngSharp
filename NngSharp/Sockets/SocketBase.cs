@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using NngSharp.Data;
 using NngSharp.Native;
@@ -65,6 +66,7 @@ namespace NngSharp.Sockets
         public void SendMessage(Message message) => _sender.SendMessage(message);
         public bool TrySendMessage(Message message) => _sender.TrySendMessage(message);
         public Task SendMessageAsync(Message message) => _sender.SendMessageAsync(message);
+        public Task SendMessageAsync(Message message, CancellationToken cancellationToken) => _sender.SendMessageAsync(message, cancellationToken);
 
         #endregion
 

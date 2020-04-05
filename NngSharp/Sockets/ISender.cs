@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using NngSharp.Data;
 
 namespace NngSharp.Sockets
@@ -12,5 +13,6 @@ namespace NngSharp.Sockets
         void SendMessage(Message message);
         bool TrySendMessage(Message message);
         Task SendMessageAsync(Message message);
+        Task SendMessageAsync(Message message, CancellationToken cancellationToken);
     }
 }

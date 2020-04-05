@@ -21,6 +21,9 @@ namespace NngSharp.Native
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern void nng_send_aio(NngSocket socket, NngAio aio);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern void nng_aio_cancel(NngAio aio);
     }
 
     [StructLayout(LayoutKind.Sequential)]

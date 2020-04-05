@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NngSharp.Data;
@@ -103,6 +104,24 @@ namespace NngSharp.Tests.Sockets.Behaviors
             FillMemory(message);
             await _client.SendMessageAsync(message);
             ReceiveAndVerify();
+        }
+
+        [Fact]
+        public async Task SendMessageAsync_With_Cancellation()
+        {
+            // kill the server to force client hang while sending
+            _server.Dispose();
+
+            // send the message to server
+            var message = new Message();
+            FillMemory(message);
+            using var cts = new CancellationTokenSource();
+            var sendMessageAsyncTask = _client.SendMessageAsync(message, cts.Token);
+
+            // cancel the operation and wait for it to complete with error
+            cts.Cancel();
+            Func<Task> act = async () => await sendMessageAsyncTask;
+            await act.Should().ThrowAsync<OperationCanceledException>();
         }
     }
 }

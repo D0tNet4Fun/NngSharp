@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using NngSharp.Data;
 using NngSharp.Native;
@@ -68,10 +69,12 @@ namespace NngSharp.Sockets.Behaviors
             return true;
         }
 
-        public async Task SendMessageAsync(Message message)
+        public Task SendMessageAsync(Message message) => SendMessageAsync(message, CancellationToken.None);
+
+        public async Task SendMessageAsync(Message message, CancellationToken cancellationToken)
         {
             // ReSharper disable once ConvertToUsingDeclaration - does not work correctly with await (todo why??)
-            using (var asyncOperation = new AsyncOperation())
+            using (var asyncOperation = new AsyncOperation(cancellationToken))
             {
                 asyncOperation.SetMessage(message);
                 NativeMethods.nng_send_aio(_nngSocket, asyncOperation);
