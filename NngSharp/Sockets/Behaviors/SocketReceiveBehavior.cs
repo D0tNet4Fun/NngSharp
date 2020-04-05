@@ -85,9 +85,11 @@ namespace NngSharp.Sockets.Behaviors
             return true;
         }
 
-        public async Task<Message> ReceiveMessageAsync()
+        public Task<Message> ReceiveMessageAsync() => ReceiveMessageAsync(CancellationToken.None);
+
+        public async Task<Message> ReceiveMessageAsync(CancellationToken cancellationToken)
         {
-            using (var asyncOperation = new AsyncOperation(CancellationToken.None))
+            using (var asyncOperation = new AsyncOperation(cancellationToken))
             {
                 NativeMethods.nng_recv_aio(_nngSocket, asyncOperation);
                 await asyncOperation.Task;
