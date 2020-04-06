@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using NngSharp.Async;
 using NngSharp.Data;
 using NngSharp.Native;
 using NngSharp.Sockets.Behaviors;
@@ -9,7 +10,7 @@ using Buffer = NngSharp.Data.Buffer;
 
 namespace NngSharp.Sockets
 {
-    public class SocketBase : ISender, IReceiver, IDisposable
+    public class SocketBase : ISender, IReceiver, IAsyncSender, IAsyncReceiver, IDisposable
     {
         private NngSocket _nngSocket;
         private readonly List<NngListener> _listeners = new List<NngListener>();
@@ -17,6 +18,8 @@ namespace NngSharp.Sockets
 
         private readonly SocketSendBehavior _sender;
         private readonly IReceiver _receiver;
+        private readonly SocketSendAsyncBehavior _asyncSender;
+        private readonly SocketReceiveAsyncBehavior _asyncReceiver;
 
         protected SocketBase(OpenSocket openSocket)
         {
@@ -25,9 +28,15 @@ namespace NngSharp.Sockets
 
             _sender = new SocketSendBehavior(_nngSocket);
             _receiver = new SocketReceiveBehavior(_nngSocket);
+
+            AsyncContext = new AsyncContext();
+            _asyncSender = new SocketSendAsyncBehavior(_nngSocket, AsyncContext);
+            _asyncReceiver = new SocketReceiveAsyncBehavior(_nngSocket, AsyncContext);
         }
 
         public static implicit operator NngSocket(SocketBase socket) => socket._nngSocket;
+
+        public AsyncContext AsyncContext { get; }
 
         public void Dispose()
         {
@@ -39,8 +48,9 @@ namespace NngSharp.Sockets
                 _dialers.Clear(); // Dialers are implicitly closed when the socket they are associated with is closed.
                 return;
             }
-
             // todo: log error?
+
+            AsyncContext.Dispose();
         }
 
         public void Listen(string url)
@@ -65,8 +75,8 @@ namespace NngSharp.Sockets
         public bool TrySendZeroCopy(ZeroCopyBuffer buffer) => _sender.TrySendZeroCopy(buffer);
         public void SendMessage(Message message) => _sender.SendMessage(message);
         public bool TrySendMessage(Message message) => _sender.TrySendMessage(message);
-        public Task SendMessageAsync(Message message) => _sender.SendMessageAsync(message);
-        public Task SendMessageAsync(Message message, CancellationToken cancellationToken) => _sender.SendMessageAsync(message, cancellationToken);
+        public Task SendMessageAsync(Message message) => _asyncSender.SendMessageAsync(message);
+        public Task SendMessageAsync(Message message, CancellationToken cancellationToken) => _asyncSender.SendMessageAsync(message, cancellationToken);
 
         #endregion
 
@@ -78,7 +88,8 @@ namespace NngSharp.Sockets
         public bool TryReceiveZeroCopy(out ZeroCopyBuffer buffer) => _receiver.TryReceiveZeroCopy(out buffer);
         public Message ReceiveMessage() => _receiver.ReceiveMessage();
         public bool TryReceiveMessage(out Message message) => _receiver.TryReceiveMessage(out message);
-        public Task<Message> ReceiveMessageAsync() => _receiver.ReceiveMessageAsync();
+        public Task<Message> ReceiveMessageAsync() => _asyncReceiver.ReceiveMessageAsync();
+        public Task<Message> ReceiveMessageAsync(CancellationToken cancellationToken) => _asyncReceiver.ReceiveMessageAsync(cancellationToken);
 
         #endregion
     }

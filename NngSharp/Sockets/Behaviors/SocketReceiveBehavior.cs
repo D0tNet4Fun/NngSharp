@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 using NngSharp.Data;
 using NngSharp.Native;
 using Buffer = NngSharp.Data.Buffer;
@@ -83,16 +81,6 @@ namespace NngSharp.Sockets.Behaviors
             ErrorHandler.ThrowIfError(errorCode);
             message = new Message(nngMessage);
             return true;
-        }
-
-        public Task<Message> ReceiveMessageAsync() => ReceiveMessageAsync(CancellationToken.None);
-
-        public async Task<Message> ReceiveMessageAsync(CancellationToken cancellationToken)
-        {
-            using var asyncOperation = new AsyncOperation(cancellationToken);
-            NativeMethods.nng_recv_aio(_nngSocket, asyncOperation);
-            await asyncOperation.Task;
-            return new Message(asyncOperation.GetMessage());
         }
     }
 }

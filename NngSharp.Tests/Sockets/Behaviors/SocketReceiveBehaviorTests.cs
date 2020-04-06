@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using NngSharp.Data;
 using NngSharp.Sockets;
@@ -90,29 +88,6 @@ namespace NngSharp.Tests.Sockets.Behaviors
             var result = _behavior.TryReceiveMessage(out var message);
             result.Should().BeTrue();
             Verify(message);
-        }
-
-        [Fact]
-        public async Task ReceiveMessageAsync()
-        {
-            Send();
-            var message = await _behavior.ReceiveMessageAsync();
-            Verify(message);
-        }
-
-        [Fact]
-        public async Task ReceiveMessageAsync_With_Cancellation()
-        {
-            // do not send a message from client to force the server hang on receive
-            //Send();
-
-            using var cts = new CancellationTokenSource();
-            var receiveMessageTask = _behavior.ReceiveMessageAsync(cts.Token);
-
-            // cancel receiving and wait for the operation complete as canceled
-            cts.Cancel();
-            Func<Task> act = async () => await receiveMessageTask;
-            await act.Should().ThrowAsync<OperationCanceledException>();
         }
     }
 }

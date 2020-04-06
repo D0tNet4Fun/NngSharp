@@ -68,15 +68,5 @@ namespace NngSharp.Sockets.Behaviors
             ErrorHandler.ThrowIfError(errorCode);
             return true;
         }
-
-        public Task SendMessageAsync(Message message) => SendMessageAsync(message, CancellationToken.None);
-
-        public async Task SendMessageAsync(Message message, CancellationToken cancellationToken)
-        {
-            using var asyncOperation = new AsyncOperation(cancellationToken);
-            asyncOperation.SetMessage(message);
-            NativeMethods.nng_send_aio(_nngSocket, asyncOperation);
-            await asyncOperation.Task;
-        }
     }
 }

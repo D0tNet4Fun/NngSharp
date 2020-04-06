@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using NngSharp.Data;
+﻿using NngSharp.Data;
 
 namespace NngSharp.Sockets
 {
@@ -11,6 +10,5 @@ namespace NngSharp.Sockets
         bool TryReceiveZeroCopy(out ZeroCopyBuffer buffer);
         Message ReceiveMessage();
         bool TryReceiveMessage(out Message message);
-        Task<Message> ReceiveMessageAsync();
     }
 }
