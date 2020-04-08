@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Nito.AsyncEx" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="nng.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
