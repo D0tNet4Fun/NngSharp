@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using NngSharp.Async;
+using NngSharp.Contracts;
 using NngSharp.Data;
 using NngSharp.Native;
 using NngSharp.Sockets.Behaviors;
@@ -16,10 +17,10 @@ namespace NngSharp.Sockets
         private readonly List<NngListener> _listeners = new List<NngListener>();
         private readonly List<NngDialer> _dialers = new List<NngDialer>();
 
-        private readonly SocketSendBehavior _sender;
+        private readonly ISender _sender;
         private readonly IReceiver _receiver;
-        private readonly SocketSendAsyncBehavior _asyncSender;
-        private readonly SocketReceiveAsyncBehavior _asyncReceiver;
+        private readonly IAsyncSender _asyncSender;
+        private readonly IAsyncReceiver _asyncReceiver;
 
         protected SocketBase(OpenSocket openSocket)
         {

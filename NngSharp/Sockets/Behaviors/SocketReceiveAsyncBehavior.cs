@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using NngSharp.Async;
+using NngSharp.Contracts;
 using NngSharp.Data;
 
 namespace NngSharp.Sockets.Behaviors

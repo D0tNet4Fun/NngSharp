@@ -1,4 +1,5 @@
 ﻿using System;
+using NngSharp.Contracts;
 using NngSharp.Data;
 using NngSharp.Native;
 using Buffer = NngSharp.Data.Buffer;

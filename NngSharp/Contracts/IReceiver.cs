@@ -1,6 +1,6 @@
 ﻿using NngSharp.Data;
 
-namespace NngSharp.Sockets
+namespace NngSharp.Contracts
 {
     public interface IReceiver
     {

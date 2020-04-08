@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using NngSharp.Data;
 
-namespace NngSharp.Async
+namespace NngSharp.Contracts
 {
     public interface IAsyncSender
     {
