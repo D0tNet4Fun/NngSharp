@@ -12,16 +12,16 @@ namespace NngSharp.Tests.Sockets.Behaviors
 {
     public class SocketSendBehaviorTests : IDisposable
     {
-        private readonly PairSocket _server;
-        private readonly PairSocket _client;
+        private readonly Pair0Socket _server;
+        private readonly Pair0Socket _client;
         private readonly SocketSendBehavior _behavior;
         private static readonly string Url = $"inproc://{nameof(SocketSendBehaviorTests)}";
 
         public SocketSendBehaviorTests()
         {
-            _server = new PairSocket();
+            _server = new Pair0Socket();
             _server.Listen(Url);
-            _client = new PairSocket();
+            _client = new Pair0Socket();
             _client.Dial(Url);
             _behavior = new SocketSendBehavior(_client);
         }

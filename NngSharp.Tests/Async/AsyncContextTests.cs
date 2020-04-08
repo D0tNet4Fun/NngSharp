@@ -11,17 +11,17 @@ namespace NngSharp.Tests.Async
 {
     public class AsyncContextTests : IDisposable
     {
-        private readonly PairSocket _server;
-        private readonly PairSocket _client;
+        private readonly Pair0Socket _server;
+        private readonly Pair0Socket _client;
         private readonly AsyncContext _serverAsyncContext;
         private readonly AsyncContext _clientAsyncContext;
         private static readonly string Url = $"inproc://{nameof(AsyncContextTests)}";
 
         public AsyncContextTests()
         {
-            _server = new PairSocket();
+            _server = new Pair0Socket();
             _server.Listen(Url);
-            _client = new PairSocket();
+            _client = new Pair0Socket();
             _client.Dial(Url);
             _serverAsyncContext = new AsyncContext(_server);
             _clientAsyncContext = new AsyncContext(_client);

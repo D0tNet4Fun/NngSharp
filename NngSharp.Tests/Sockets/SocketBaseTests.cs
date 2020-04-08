@@ -11,7 +11,7 @@ namespace NngSharp.Tests.Sockets
 
         public SocketBaseTests()
         {
-            _socket = new PairSocket();
+            _socket = new Pair0Socket();
         }
 
         public void Dispose()

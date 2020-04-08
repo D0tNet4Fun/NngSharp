@@ -3,13 +3,13 @@ using Xunit;
 
 namespace NngSharp.Tests.Sockets
 {
-    public class PairSocketTests
+    public class Pair0SocketTests
     {
         [Fact]
         public void CreatePairSocket()
         {
-            using var socket1 = new PairSocket();
-            using var socket2 = new PairSocket();
+            using var socket1 = new Pair0Socket();
+            using var socket2 = new Pair0Socket();
             var url = "ipc://hello/world";
             socket1.Listen(url);
         }

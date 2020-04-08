@@ -2,9 +2,9 @@
 
 namespace NngSharp.Sockets
 {
-    public class PairSocket : SocketBase
+    public class Pair0Socket : SocketBase
     {
-        public PairSocket()
+        public Pair0Socket()
             : base(NativeMethods.nng_pair0_open)
         {
 
