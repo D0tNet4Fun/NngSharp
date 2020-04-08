@@ -23,7 +23,7 @@ namespace NngSharp.Tests.Sockets.Behaviors
             _server.Listen(Url);
             _client = new PairSocket();
             _client.Dial(Url);
-            _behavior = new SocketReceiveAsyncBehavior(_server, _server.AsyncContext);
+            _behavior = new SocketReceiveAsyncBehavior(_server.AsyncContext);
         }
 
         public void Dispose()

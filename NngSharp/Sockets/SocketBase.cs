@@ -29,9 +29,9 @@ namespace NngSharp.Sockets
             _sender = new SocketSendBehavior(_nngSocket);
             _receiver = new SocketReceiveBehavior(_nngSocket);
 
-            AsyncContext = new AsyncContext();
-            _asyncSender = new SocketSendAsyncBehavior(_nngSocket, AsyncContext);
-            _asyncReceiver = new SocketReceiveAsyncBehavior(_nngSocket, AsyncContext);
+            AsyncContext = new AsyncContext(_nngSocket);
+            _asyncSender = new SocketSendAsyncBehavior(AsyncContext);
+            _asyncReceiver = new SocketReceiveAsyncBehavior(AsyncContext);
         }
 
         public static implicit operator NngSocket(SocketBase socket) => socket._nngSocket;

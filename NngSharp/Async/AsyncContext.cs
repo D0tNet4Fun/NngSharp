@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Nito.AsyncEx;
 using NngSharp.Data;
 using NngSharp.Native;
 
@@ -7,14 +9,17 @@ namespace NngSharp.Async
 {
     public class AsyncContext : IDisposable
     {
+        private readonly NngSocket _nngSocket;
         private NngAio _nngAio;
 
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable - we don't want GC to collect it until AsyncContext goes out of scope
         private readonly NngAioCallback _callback;
-        private TaskCompletionSource<object> _taskCompletionSource;
+        private readonly AsyncAutoResetEvent _isAvailable = new AsyncAutoResetEvent(true);
+        private AsyncOperation _currentOperation;
 
-        public AsyncContext()
+        public AsyncContext(NngSocket nngSocket)
         {
+            _nngSocket = nngSocket;
             _callback = OnCompleted;
             var errorCode = NativeMethods.nng_aio_alloc(out _nngAio, _callback, IntPtr.Zero);
             ErrorHandler.ThrowIfError(errorCode);
@@ -26,38 +31,73 @@ namespace NngSharp.Async
             _nngAio = default;
         }
 
-        public static implicit operator NngAio(AsyncContext asyncContext) => asyncContext._nngAio;
-
-        public void SetCurrentOperation(AsyncOperation asyncOperation)
-        {
-            _taskCompletionSource = asyncOperation.TaskCompletionSource; // todo thread safe
-        }
-
-        private void ClearCurrentOperation()
-        {
-            _taskCompletionSource = null; // todo thread safe
-        }
-
         private void OnCompleted(IntPtr arg)
         {
+            var taskCompletionSource = _currentOperation.TaskCompletionSource;
             var errorCode = NativeMethods.nng_aio_result(_nngAio);
             switch (errorCode)
             {
                 case NngErrorCode.Success:
-                    _taskCompletionSource.SetResult(null);
+                    taskCompletionSource.SetResult(null);
                     break;
                 case NngErrorCode.OperationCanceled:
-                    _taskCompletionSource.SetCanceled();
+                    taskCompletionSource.SetCanceled();
                     break;
                 default:
-                    _taskCompletionSource.SetException(new NngException(errorCode));
+                    taskCompletionSource.SetException(new NngException(errorCode));
                     break;
             }
-            ClearCurrentOperation();
         }
 
-        public void SetMessage(NngMsg message) => NativeMethods.nng_aio_set_msg(_nngAio, message);
+        private async Task ExecuteAsyncOperation(Func<Task> asyncOperationCallback, CancellationToken cancellationToken)
+        {
+            // wait until the event is set async. this means the context can accept a new async operation.
+            await _isAvailable.WaitAsync(cancellationToken);
 
-        public NngMsg GetMessage() => NativeMethods.nng_aio_get_msg(_nngAio);
+            try
+            {
+                await asyncOperationCallback();
+            }
+            finally
+            {
+                // the context finished executing the current operation and can now accept a new async operation
+                _currentOperation = null;
+                _isAvailable.Set();
+            }
+        }
+
+        public Task SendMessageAsync(NngMsg message, CancellationToken cancellationToken)
+        {
+            async Task SendMessageAsync()
+            {
+                using var asyncOperation = new AsyncOperation(_nngAio, cancellationToken);
+                SetMessage(message);
+                _currentOperation = asyncOperation;
+                NativeMethods.nng_send_aio(_nngSocket, _nngAio);
+                await asyncOperation.Task;
+            }
+
+            return ExecuteAsyncOperation(SendMessageAsync, cancellationToken);
+        }
+
+        public async Task<Message> ReceiveMessageAsync(CancellationToken cancellationToken)
+        {
+            NngMsg nngMessage = default;
+            async Task ReceiveMessageAsync()
+            {
+                using var asyncOperation = new AsyncOperation(_nngAio, cancellationToken);
+                _currentOperation = asyncOperation;
+                NativeMethods.nng_recv_aio(_nngSocket, _nngAio);
+                await asyncOperation.Task;
+                nngMessage = GetMessage();
+            }
+
+            await ExecuteAsyncOperation(ReceiveMessageAsync, cancellationToken);
+            return new Message(nngMessage);
+        }
+
+        private void SetMessage(NngMsg message) => NativeMethods.nng_aio_set_msg(_nngAio, message);
+
+        private NngMsg GetMessage() => NativeMethods.nng_aio_get_msg(_nngAio);
     }
 }

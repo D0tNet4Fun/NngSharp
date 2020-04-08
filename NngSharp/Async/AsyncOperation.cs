@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NngSharp.Native;
 
-namespace NngSharp.Data
+namespace NngSharp.Async
 {
     public class AsyncOperation : IDisposable
     {
