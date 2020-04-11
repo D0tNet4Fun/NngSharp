@@ -30,14 +30,11 @@ namespace NngSharp.Sockets
             _sender = new SocketSendBehavior(_nngSocket);
             _receiver = new SocketReceiveBehavior(_nngSocket);
 
-            AsyncContext = new AsyncContext(_nngSocket);
-            _asyncSender = new SocketSendAsyncBehavior(AsyncContext);
-            _asyncReceiver = new SocketReceiveAsyncBehavior(AsyncContext);
+            _asyncSender = new SocketSendAsyncBehavior(_nngSocket);
+            _asyncReceiver = new SocketReceiveAsyncBehavior(_nngSocket);
+
+            Options = new SocketOptions(_asyncSender.Options, _asyncReceiver.Options);
         }
-
-        public static implicit operator NngSocket(SocketBase socket) => socket._nngSocket;
-
-        public AsyncContext AsyncContext { get; }
 
         public void Dispose()
         {
@@ -51,8 +48,13 @@ namespace NngSharp.Sockets
             }
             // todo: log error?
 
-            AsyncContext.Dispose();
+            _asyncSender.Dispose();
+            _asyncReceiver.Dispose();
         }
+
+        public SocketOptions Options { get; }
+
+        public static implicit operator NngSocket(SocketBase socket) => socket._nngSocket;
 
         public void Listen(string url)
         {
@@ -70,6 +72,7 @@ namespace NngSharp.Sockets
 
         #region Send
 
+        AsyncOptions IAsyncSender.Options => _asyncSender.Options;
         public void Send(Buffer buffer) => _sender.Send(buffer);
         public bool TrySend(Buffer buffer) => _sender.TrySend(buffer);
         public void SendZeroCopy(ZeroCopyBuffer buffer) => _sender.SendZeroCopy(buffer);
@@ -83,6 +86,7 @@ namespace NngSharp.Sockets
 
         #region Receive
 
+        AsyncOptions IAsyncReceiver.Options => _asyncReceiver.Options;
         public Buffer Receive() => _receiver.Receive();
         public bool TryReceive(out Buffer buffer) => _receiver.TryReceive(out buffer);
         public ZeroCopyBuffer ReceiveZeroCopy() => _receiver.ReceiveZeroCopy();

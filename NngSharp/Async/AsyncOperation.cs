@@ -39,6 +39,9 @@ namespace NngSharp.Async
                 case NngErrorCode.OperationCanceled:
                     _taskCompletionSource.SetCanceled();
                     break;
+                case NngErrorCode.TimedOut:
+                    _taskCompletionSource.SetException(new TimeoutException());
+                    break;
                 default:
                     _taskCompletionSource.SetException(new NngException(errorCode));
                     break;

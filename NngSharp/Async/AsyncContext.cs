@@ -24,6 +24,7 @@ namespace NngSharp.Async
             _callback = OnCompleted;
             var errorCode = NativeMethods.nng_aio_alloc(out _nngAio, _callback, IntPtr.Zero);
             ErrorHandler.ThrowIfError(errorCode);
+            Options = new AsyncOptions(_nngAio);
         }
 
         public void Dispose()
@@ -31,6 +32,8 @@ namespace NngSharp.Async
             NativeMethods.nng_aio_free(_nngAio);
             _nngAio = default;
         }
+
+        public AsyncOptions Options { get; }
 
         private void OnCompleted(IntPtr arg)
         {

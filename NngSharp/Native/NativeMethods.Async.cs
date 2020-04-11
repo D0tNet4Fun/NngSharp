@@ -30,6 +30,9 @@ namespace NngSharp.Native
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern void nng_aio_cancel(NngAio aio);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern void nng_aio_set_timeout(NngAio aio, NngDuration timeout);
     }
 
     [StructLayout(LayoutKind.Sequential)]

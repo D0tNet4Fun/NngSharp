@@ -1,11 +1,28 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace NngSharp.Native
 {
     internal static partial class NativeMethods
     {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct NngDuration
+        {
+            public const int Zero = 0;
+            public const int Infinite = -1;
+            public const int Default = -2;
+
+            public NngDuration(int milliseconds)
+                : this()
+            {
+                Milliseconds = milliseconds;
+            }
+
+            public int Milliseconds;
+        }
+
         [Flags]
-        internal enum NngFlags
+        public enum NngFlags
         {
             None = 0,
             /// <summary>
