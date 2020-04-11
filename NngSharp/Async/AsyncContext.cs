@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Nito.AsyncEx;
@@ -33,20 +34,8 @@ namespace NngSharp.Async
 
         private void OnCompleted(IntPtr arg)
         {
-            var taskCompletionSource = _currentOperation.TaskCompletionSource;
-            var errorCode = NativeMethods.nng_aio_result(_nngAio);
-            switch (errorCode)
-            {
-                case NngErrorCode.Success:
-                    taskCompletionSource.SetResult(null);
-                    break;
-                case NngErrorCode.OperationCanceled:
-                    taskCompletionSource.SetCanceled();
-                    break;
-                default:
-                    taskCompletionSource.SetException(new NngException(errorCode));
-                    break;
-            }
+            RequireCurrentOperation();
+            _currentOperation.Complete();
         }
 
         private async Task ExecuteAsyncOperation(Func<Task> asyncOperationCallback, CancellationToken cancellationToken)
@@ -66,15 +55,14 @@ namespace NngSharp.Async
             }
         }
 
-        public Task SendMessageAsync(NngMsg message, CancellationToken cancellationToken)
+        public Task SendMessageAsync(Message message, CancellationToken cancellationToken)
         {
             async Task SendMessageAsync()
             {
                 using var asyncOperation = new AsyncOperation(_nngAio, cancellationToken);
                 SetMessage(message);
                 _currentOperation = asyncOperation;
-                NativeMethods.nng_send_aio(_nngSocket, _nngAio);
-                await asyncOperation.Task;
+                await SendAsync();
             }
 
             return ExecuteAsyncOperation(SendMessageAsync, cancellationToken);
@@ -87,8 +75,7 @@ namespace NngSharp.Async
             {
                 using var asyncOperation = new AsyncOperation(_nngAio, cancellationToken);
                 _currentOperation = asyncOperation;
-                NativeMethods.nng_recv_aio(_nngSocket, _nngAio);
-                await asyncOperation.Task;
+                await ReceiveAsync();
                 nngMessage = GetMessage();
             }
 
@@ -99,5 +86,25 @@ namespace NngSharp.Async
         private void SetMessage(NngMsg message) => NativeMethods.nng_aio_set_msg(_nngAio, message);
 
         private NngMsg GetMessage() => NativeMethods.nng_aio_get_msg(_nngAio);
+
+        private Task SendAsync()
+        {
+            RequireCurrentOperation();
+            NativeMethods.nng_send_aio(_nngSocket, _nngAio);
+            return _currentOperation.Task;
+        }
+
+        private Task ReceiveAsync()
+        {
+            RequireCurrentOperation();
+            NativeMethods.nng_recv_aio(_nngSocket, _nngAio);
+            return _currentOperation.Task;
+        }
+
+        [Conditional("DEBUG")]
+        private void RequireCurrentOperation()
+        {
+            Debug.Assert(_currentOperation != null, "Current operation is not set");
+        }
     }
 }

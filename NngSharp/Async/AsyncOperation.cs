@@ -9,6 +9,7 @@ namespace NngSharp.Async
     {
         private readonly NngAio _nngAio;
         private readonly CancellationTokenRegistration _cancellationTokenRegistration;
+        private readonly TaskCompletionSource<object> _taskCompletionSource = new TaskCompletionSource<object>();
 
         public AsyncOperation(NngAio nngAio, CancellationToken cancellationToken)
         {
@@ -25,9 +26,24 @@ namespace NngSharp.Async
             _cancellationTokenRegistration.Dispose();
         }
 
-        public TaskCompletionSource<object> TaskCompletionSource { get; } = new TaskCompletionSource<object>();
+        public Task Task => _taskCompletionSource.Task;
 
-        public Task Task => TaskCompletionSource.Task;
+        public void Complete()
+        {
+            var errorCode = NativeMethods.nng_aio_result(_nngAio);
+            switch (errorCode)
+            {
+                case NngErrorCode.Success:
+                    _taskCompletionSource.SetResult(null);
+                    break;
+                case NngErrorCode.OperationCanceled:
+                    _taskCompletionSource.SetCanceled();
+                    break;
+                default:
+                    _taskCompletionSource.SetException(new NngException(errorCode));
+                    break;
+            }
+        }
 
         private void OnCancellationRequested()
         {
