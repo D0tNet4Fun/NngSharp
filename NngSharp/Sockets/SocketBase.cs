@@ -43,7 +43,7 @@ namespace NngSharp.Sockets
             {
                 _nngSocket = default;
                 _listeners.Clear(); // Listeners are implicitly closed when the socket they are associated with is closed
-                _dialers.Clear(); // Dialers are implicitly closed when the socket they are associated with is closed.
+                _dialers.Clear(); // Dialers are implicitly closed when the socket they are associated with is closed
                 return;
             }
             // todo: log error?

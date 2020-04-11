@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 using NngSharp.Contracts;
 using NngSharp.Data;
 using NngSharp.Native;
@@ -8,7 +6,7 @@ using Buffer = NngSharp.Data.Buffer;
 
 namespace NngSharp.Sockets.Behaviors
 {
-    public class SocketSendBehavior : ISender
+    internal class SocketSendBehavior : ISender
     {
         private readonly NngSocket _nngSocket;
 

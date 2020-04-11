@@ -6,7 +6,7 @@ using Buffer = NngSharp.Data.Buffer;
 
 namespace NngSharp.Sockets.Behaviors
 {
-    public class SocketReceiveBehavior : IReceiver
+    internal class SocketReceiveBehavior : IReceiver
     {
         private readonly NngSocket _nngSocket;
 
