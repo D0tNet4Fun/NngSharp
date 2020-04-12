@@ -15,5 +15,8 @@ namespace NngSharp.Native
 
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern IntPtr nng_strerror(NngErrorCode errorCode);
+
+        [DllImport(NngDll, CallingConvention = NngCallingConvention)]
+        public static extern void nng_strfree(IntPtr ptr);
     }
 }

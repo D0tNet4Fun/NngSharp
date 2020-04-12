@@ -39,6 +39,4 @@ namespace NngSharp.Native
         [DllImport(NngDll, CallingConvention = NngCallingConvention)]
         public static extern NngErrorCode nng_surveyor0_open(out NngSocket nngSocket);
     }
-
-    public delegate NngErrorCode OpenSocket(out NngSocket nngSocket); // common method signature for opening a socket using NativeMethods
 }

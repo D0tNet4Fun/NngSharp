@@ -12,6 +12,7 @@ namespace NngSharp
             {
                 case NngErrorCode.Success: return;
                 case NngErrorCode.Unknown: throw new InvalidOperationException("Error code was not set by NNG");
+                case NngErrorCode.TimedOut: throw new TimeoutException();
                 default: throw new NngException(errorCode);
             }
         }

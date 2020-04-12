@@ -1,18 +1,19 @@
-﻿using NngSharp.Native;
+﻿using System;
+using NngSharp.Native;
 
 namespace NngSharp.Async
 {
     public class AsyncOptions
     {
         private readonly NngAio _nngAio;
-        private int _timeoutInMilliseconds;
+        private TimeSpan _timeoutInMilliseconds = new NativeMethods.NngDuration(NativeMethods.NngDuration.Default).AsTimeSpan();
 
         public AsyncOptions(NngAio nngAio)
         {
             _nngAio = nngAio;
         }
 
-        public int TimeoutInMilliseconds
+        public TimeSpan TimeoutInMilliseconds
         {
             get => _timeoutInMilliseconds;
             set

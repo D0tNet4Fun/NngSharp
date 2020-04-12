@@ -32,7 +32,7 @@ namespace NngSharp.Sockets
             _asyncSender = new SocketSendAsyncBehavior(_nngSocket);
             _asyncReceiver = new SocketReceiveAsyncBehavior(_nngSocket);
 
-            Options = new SocketOptions(_asyncSender.Options, _asyncReceiver.Options);
+            Options = new SocketOptions(_nngSocket, _asyncSender.Options, _asyncReceiver.Options);
         }
 
         public void Dispose()
@@ -50,6 +50,18 @@ namespace NngSharp.Sockets
             _asyncSender.Dispose();
             _asyncReceiver.Dispose();
         }
+
+        public string Name
+        {
+            get => SocketOptionHelper.GetStringValue(_nngSocket, SocketOptions.NNG_OPT_SOCKNAME);
+            set => SocketOptionHelper.SetStringValue(_nngSocket, SocketOptions.NNG_OPT_SOCKNAME, value);
+        }
+
+        public bool IsRaw => SocketOptionHelper.GetBoolValue(_nngSocket, SocketOptions.NNG_OPT_RAW);
+
+        public ProtocolType ProtocolType => (ProtocolType)SocketOptionHelper.GetInt32Value(_nngSocket, SocketOptions.NNG_OPT_PROTO);
+
+        public string ProtocolName => SocketOptionHelper.GetStringValue(_nngSocket, SocketOptions.NNG_OPT_PROTONAME);
 
         public SocketOptions Options { get; }
 
@@ -95,5 +107,7 @@ namespace NngSharp.Sockets
 
         #endregion
     }
+
+    public delegate NngErrorCode OpenSocket(out NngSocket nngSocket); // common method signature for opening a socket using NativeMethods
 }
 

@@ -12,13 +12,21 @@ namespace NngSharp.Native
             public const int Infinite = -1;
             public const int Default = -2;
 
+            public int Milliseconds;
+
             public NngDuration(int milliseconds)
                 : this()
             {
                 Milliseconds = milliseconds;
             }
 
-            public int Milliseconds;
+            public NngDuration(TimeSpan timeSpan)
+                : this(checked((int)timeSpan.TotalMilliseconds))
+            {
+
+            }
+
+            public TimeSpan AsTimeSpan() => TimeSpan.FromMilliseconds(Milliseconds);
         }
 
         [Flags]
