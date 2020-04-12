@@ -38,7 +38,7 @@ namespace NngSharp.Sockets
 
         public static void SetStringValue(NngSocket socket, string name, string value)
         {
-            NativeMethods.nng_socket_set_string(socket, name, value);
+            NativeMethods.nng_socket_set_string(socket, name, value).ThrowIfError();
         }
 
         public static TimeSpan GetTimeSpanValue(NngSocket socket, string name)
@@ -49,7 +49,7 @@ namespace NngSharp.Sockets
 
         public static void SetTimeSpanValue(NngSocket socket, string name, in TimeSpan value)
         {
-            NativeMethods.nng_socket_set_ms(socket, name, new NativeMethods.NngDuration(value));
+            NativeMethods.nng_socket_set_ms(socket, name, new NativeMethods.NngDuration(value)).ThrowIfError();
         }
     }
 }
