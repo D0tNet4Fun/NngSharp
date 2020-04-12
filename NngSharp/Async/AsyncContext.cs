@@ -22,8 +22,7 @@ namespace NngSharp.Async
         {
             _nngSocket = nngSocket;
             _callback = OnCompleted;
-            var errorCode = NativeMethods.nng_aio_alloc(out _nngAio, _callback, IntPtr.Zero);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_aio_alloc(out _nngAio, _callback, IntPtr.Zero).ThrowIfError();
             Options = new AsyncOptions(_nngAio);
         }
 

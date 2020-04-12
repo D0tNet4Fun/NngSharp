@@ -7,7 +7,7 @@ using NngSharp.Native;
 
 namespace NngSharp.Sockets.Behaviors
 {
-    public class SocketReceiveAsyncBehavior : IAsyncReceiver
+    internal class SocketReceiveAsyncBehavior : IAsyncReceiver
     {
         private readonly AsyncContext _asyncContext;
 

@@ -24,8 +24,7 @@ namespace NngSharp.Sockets
 
         protected SocketBase(OpenSocket openSocket)
         {
-            var errorCode = openSocket(out _nngSocket);
-            ErrorHandler.ThrowIfError(errorCode);
+            openSocket(out _nngSocket).ThrowIfError();
 
             _sender = new SocketSendBehavior(_nngSocket);
             _receiver = new SocketReceiveBehavior(_nngSocket);
@@ -33,7 +32,7 @@ namespace NngSharp.Sockets
             _asyncSender = new SocketSendAsyncBehavior(_nngSocket);
             _asyncReceiver = new SocketReceiveAsyncBehavior(_nngSocket);
 
-            Options = new SocketOptions(_asyncSender.Options, _asyncReceiver.Options);
+            Options = new SocketOptions(_nngSocket, _asyncSender.Options, _asyncReceiver.Options);
         }
 
         public void Dispose()
@@ -43,7 +42,7 @@ namespace NngSharp.Sockets
             {
                 _nngSocket = default;
                 _listeners.Clear(); // Listeners are implicitly closed when the socket they are associated with is closed
-                _dialers.Clear(); // Dialers are implicitly closed when the socket they are associated with is closed.
+                _dialers.Clear(); // Dialers are implicitly closed when the socket they are associated with is closed
                 return;
             }
             // todo: log error?
@@ -52,21 +51,31 @@ namespace NngSharp.Sockets
             _asyncReceiver.Dispose();
         }
 
+        public string Name
+        {
+            get => SocketOptionHelper.GetStringValue(_nngSocket, SocketOptions.NNG_OPT_SOCKNAME);
+            set => SocketOptionHelper.SetStringValue(_nngSocket, SocketOptions.NNG_OPT_SOCKNAME, value);
+        }
+
+        public bool IsRaw => SocketOptionHelper.GetBoolValue(_nngSocket, SocketOptions.NNG_OPT_RAW);
+
+        public ProtocolType ProtocolType => (ProtocolType)SocketOptionHelper.GetInt32Value(_nngSocket, SocketOptions.NNG_OPT_PROTO);
+
+        public string ProtocolName => SocketOptionHelper.GetStringValue(_nngSocket, SocketOptions.NNG_OPT_PROTONAME);
+
         public SocketOptions Options { get; }
 
         public static implicit operator NngSocket(SocketBase socket) => socket._nngSocket;
 
         public void Listen(string url)
         {
-            var errorCode = NativeMethods.nng_listen(_nngSocket, url, out var nngListener, default);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_listen(_nngSocket, url, out var nngListener, default).ThrowIfError();
             _listeners.Add(nngListener);
         }
 
         public void Dial(string url)
         {
-            var errorCode = NativeMethods.nng_dial(_nngSocket, url, out var nngDialer, default);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_dial(_nngSocket, url, out var nngDialer, default).ThrowIfError();
             _dialers.Add(nngDialer);
         }
 
@@ -98,5 +107,7 @@ namespace NngSharp.Sockets
 
         #endregion
     }
+
+    public delegate NngErrorCode OpenSocket(out NngSocket nngSocket); // common method signature for opening a socket using NativeMethods
 }
 

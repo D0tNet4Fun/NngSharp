@@ -6,7 +6,7 @@ using Buffer = NngSharp.Data.Buffer;
 
 namespace NngSharp.Sockets.Behaviors
 {
-    public class SocketReceiveBehavior : IReceiver
+    internal class SocketReceiveBehavior : IReceiver
     {
         private readonly NngSocket _nngSocket;
 
@@ -20,8 +20,7 @@ namespace NngSharp.Sockets.Behaviors
             var buffer = new Buffer(128); // todo 
 
             var sizePtr = (UIntPtr)buffer.Length;
-            var errorCode = NativeMethods.nng_recv(_nngSocket, buffer.Ptr, ref sizePtr, default);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_recv(_nngSocket, buffer.Ptr, ref sizePtr, default).ThrowIfError();
 
             buffer.Length = (int)sizePtr;
             return buffer;
@@ -38,7 +37,7 @@ namespace NngSharp.Sockets.Behaviors
                 buffer = null;
                 return false;
             }
-            ErrorHandler.ThrowIfError(errorCode);
+            errorCode.ThrowIfError();
 
             buffer.Length = (int)sizePtr;
             return true;
@@ -46,8 +45,7 @@ namespace NngSharp.Sockets.Behaviors
 
         public ZeroCopyBuffer ReceiveZeroCopy()
         {
-            var errorCode = NativeMethods.nng_recv(_nngSocket, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_recv(_nngSocket, out var ptr, out var sizePtr, NativeMethods.NngFlags.Allocate).ThrowIfError();
             return new ZeroCopyBuffer(ptr, (int)sizePtr);
         }
 
@@ -59,15 +57,14 @@ namespace NngSharp.Sockets.Behaviors
                 buffer = null;
                 return false;
             }
-            ErrorHandler.ThrowIfError(errorCode);
+            errorCode.ThrowIfError();
             buffer = new ZeroCopyBuffer(ptr, (int)sizePtr);
             return true;
         }
 
         public Message ReceiveMessage()
         {
-            var errorCode = NativeMethods.nng_recvmsg(_nngSocket, out var nngMessage, default);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_recvmsg(_nngSocket, out var nngMessage, default).ThrowIfError();
             return new Message(nngMessage);
         }
 
@@ -79,7 +76,7 @@ namespace NngSharp.Sockets.Behaviors
                 message = null;
                 return false;
             }
-            ErrorHandler.ThrowIfError(errorCode);
+            errorCode.ThrowIfError();
             message = new Message(nngMessage);
             return true;
         }

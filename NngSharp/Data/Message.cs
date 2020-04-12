@@ -41,8 +41,7 @@ namespace NngSharp.Data
                 var toChop = Capacity - value;
                 if (toChop > 0)
                 {
-                    var errorCode = NativeMethods.nng_msg_chop(_nngMessage, (UIntPtr)toChop);
-                    ErrorHandler.ThrowIfError(errorCode);
+                    NativeMethods.nng_msg_chop(_nngMessage, (UIntPtr)toChop).ThrowIfError();
                 }
                 _length = value;
             }
@@ -56,16 +55,14 @@ namespace NngSharp.Data
             
             if (Capacity == 0)
             {
-                var errorCode = NativeMethods.nng_msg_alloc(out _nngMessage, (UIntPtr)capacity);
-                ErrorHandler.ThrowIfError(errorCode);
+                NativeMethods.nng_msg_alloc(out _nngMessage, (UIntPtr)capacity).ThrowIfError();
                 UpdateState();
                 return;
             }
 
             if (Capacity < capacity)
             {
-                var errorCode = NativeMethods.nng_msg_realloc(_nngMessage, (UIntPtr)capacity);
-                ErrorHandler.ThrowIfError(errorCode);
+                NativeMethods.nng_msg_realloc(_nngMessage, (UIntPtr)capacity).ThrowIfError();
                 UpdateState();
             }
             else
