@@ -17,8 +17,7 @@ namespace NngSharp.Sockets.Behaviors
 
         public void Send(Buffer buffer)
         {
-            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, default);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, default).ThrowIfError();
         }
 
         public bool TrySend(Buffer buffer)
@@ -29,15 +28,14 @@ namespace NngSharp.Sockets.Behaviors
                 case NngErrorCode.TryAgain:
                     return false;
                 default:
-                    ErrorHandler.ThrowIfError(errorCode);
+                    errorCode.ThrowIfError();
                     return true; // only if success
             }
         }
 
         public void SendZeroCopy(ZeroCopyBuffer buffer)
         {
-            var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Allocate);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Allocate).ThrowIfError();
             // from doc: data is "owned" by the function, and it will assume responsibility for calling nng_free() when it is no longer needed.
             // clear the data to mark it as no longer needed
             buffer.Clear();
@@ -47,7 +45,7 @@ namespace NngSharp.Sockets.Behaviors
         {
             var errorCode = NativeMethods.nng_send(_nngSocket, buffer.Ptr, (UIntPtr)buffer.Length, NativeMethods.NngFlags.Async | NativeMethods.NngFlags.Allocate);
             if (errorCode == NngErrorCode.TryAgain) return false;
-            ErrorHandler.ThrowIfError(errorCode);
+            errorCode.ThrowIfError();
             // from doc: data is "owned" by the function, and it will assume responsibility for calling nng_free() when it is no longer needed.
             // clear the data to mark it as no longer needed
             buffer.Clear();
@@ -56,15 +54,14 @@ namespace NngSharp.Sockets.Behaviors
 
         public void SendMessage(Message message)
         {
-            var errorCode = NativeMethods.nng_sendmsg(_nngSocket, message, default);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_sendmsg(_nngSocket, message, default).ThrowIfError();
         }
 
         public bool TrySendMessage(Message message)
         {
             var errorCode = NativeMethods.nng_sendmsg(_nngSocket, message, NativeMethods.NngFlags.Async);
             if (errorCode == NngErrorCode.TryAgain) return false;
-            ErrorHandler.ThrowIfError(errorCode);
+            errorCode.ThrowIfError();
             return true;
         }
     }

@@ -24,8 +24,7 @@ namespace NngSharp.Sockets
 
         protected SocketBase(OpenSocket openSocket)
         {
-            var errorCode = openSocket(out _nngSocket);
-            ErrorHandler.ThrowIfError(errorCode);
+            openSocket(out _nngSocket).ThrowIfError();
 
             _sender = new SocketSendBehavior(_nngSocket);
             _receiver = new SocketReceiveBehavior(_nngSocket);
@@ -58,15 +57,13 @@ namespace NngSharp.Sockets
 
         public void Listen(string url)
         {
-            var errorCode = NativeMethods.nng_listen(_nngSocket, url, out var nngListener, default);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_listen(_nngSocket, url, out var nngListener, default).ThrowIfError();
             _listeners.Add(nngListener);
         }
 
         public void Dial(string url)
         {
-            var errorCode = NativeMethods.nng_dial(_nngSocket, url, out var nngDialer, default);
-            ErrorHandler.ThrowIfError(errorCode);
+            NativeMethods.nng_dial(_nngSocket, url, out var nngDialer, default).ThrowIfError();
             _dialers.Add(nngDialer);
         }
 

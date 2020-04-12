@@ -6,7 +6,7 @@ namespace NngSharp
     internal static class ErrorHandler
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfError(NngErrorCode errorCode)
+        public static void ThrowIfError(this NngErrorCode errorCode)
         {
             switch (errorCode)
             {
