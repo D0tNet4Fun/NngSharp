@@ -2,7 +2,6 @@
 using FluentAssertions;
 using NngSharp.Sockets;
 using Xunit;
-using ProtocolType = NngSharp.Sockets.ProtocolType;
 
 namespace NngSharp.Tests.Sockets
 {
