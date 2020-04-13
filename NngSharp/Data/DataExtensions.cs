@@ -13,12 +13,32 @@ namespace NngSharp.Data
         {
             var length = encoding.GetByteCount(value);
             memory.Allocate(length);
-            encoding.GetBytes(value, memory.Span);
+#if !NETFRAMEWORK
+            encoding.GetBytes(value, memory.AsSpan());
+#else
+            unsafe
+            {
+                fixed (char* chars = value)
+                {
+                    encoding.GetBytes(chars, value.Length, (byte*)memory.Ptr, length);
+                }
+            }
+#endif
         }
 
         public static string GetString(this IMemory memory) => GetString(memory, Encoding.UTF8);
 
-        public static string GetString(this IMemory memory, Encoding encoding) => encoding.GetString(memory.Span);
+        public static string GetString(this IMemory memory, Encoding encoding)
+        {
+#if !NETFRAMEWORK
+            return encoding.GetString(memory.AsSpan());
+#else
+            unsafe
+            {
+                return encoding.GetString((byte*)memory.Ptr, memory.Length);
+            }
+#endif
+        }
 
         public static void SetStruct<T>(this IMemory memory, T value)
             where T : struct
@@ -42,17 +62,20 @@ namespace NngSharp.Data
             memory.Allocate(capacity);
             while (true)
             {
-                using var stream = memory.GetWriteStream();
-                try
+                using (var stream = memory.GetWriteStream())
                 {
-                    serializer.WriteObject(stream, value);
+                    try
+                    {
+                        serializer.WriteObject(stream, value);
+                    }
+                    catch (NotSupportedException)
+                    {
+                        memory.Allocate(capacity *= 2);
+                        continue;
+                    }
+                    memory.Length = checked((int)stream.Position);
                 }
-                catch (NotSupportedException)
-                {
-                    memory.Allocate(capacity *= 2);
-                    continue;
-                }
-                memory.Length = checked((int)stream.Position);
+
                 break;
             }
         }
@@ -61,8 +84,10 @@ namespace NngSharp.Data
 
         public static T GetDataContract<T>(this IMemory memory, DataContractJsonSerializer serializer)
         {
-            using var stream = memory.GetReadStream();
-            return (T)serializer.ReadObject(stream);
+            using (var stream = memory.GetReadStream())
+            {
+                return (T)serializer.ReadObject(stream);
+            }
         }
     }
 }

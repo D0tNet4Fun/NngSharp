@@ -61,7 +61,7 @@ namespace NngSharp.Tests.Sockets
         }
 
         [Fact]
-        public async Task SendAsyncTimeout__Throws()
+        public void SendAsyncTimeout__Throws()
         {
             var timeSpan = TimeSpan.FromMilliseconds(100);
             _socket.Options.SendAsyncTimeout = timeSpan;
@@ -70,20 +70,20 @@ namespace NngSharp.Tests.Sockets
             // try to send a message async without being connected
             using var message = new Message();
             message.SetString("x");
-            Func<Task> sendAsync = async () => await _socket.SendMessageAsync(message);
-            await sendAsync.Should().ThrowAsync<TimeoutException>();
+            Func<Task> sendAsync = () => _socket.SendMessageAsync(message);
+            sendAsync.Should().Throw<TimeoutException>();
         }
 
         [Fact]
-        public async Task ReceiveAsyncTimeout__Throws()
+        public void ReceiveAsyncTimeout__Throws()
         {
             var timeSpan = TimeSpan.FromMilliseconds(100);
             _socket.Options.ReceiveAsyncTimeout = timeSpan;
             _socket.Options.ReceiveAsyncTimeout.Should().Be(timeSpan);
 
             // try to receive a message async without being connected
-            Func<Task<Message>> receiveAsync = async () => await _socket.ReceiveMessageAsync();
-            await receiveAsync.Should().ThrowAsync<TimeoutException>();
+            Func<Task<Message>> receiveAsync = () => _socket.ReceiveMessageAsync();
+            receiveAsync.Should().Throw<TimeoutException>();
         }
     }
 }

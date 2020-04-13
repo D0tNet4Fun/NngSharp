@@ -8,7 +8,7 @@ namespace NngSharp.Contracts
 {
     public interface IAsyncReceiver : IDisposable
     {
-        public AsyncOptions Options { get; }
+        AsyncOptions Options { get; }
         Task<Message> ReceiveMessageAsync();
         Task<Message> ReceiveMessageAsync(CancellationToken cancellationToken);
     }
