@@ -45,28 +45,28 @@ namespace NngSharp.Async
             // wait until the event is set async. this means the context can accept a new async operation.
             await _isAvailable.WaitAsync(cancellationToken);
 
-            try
+            using (var asyncOperation = new AsyncOperation(_nngAio, cancellationToken))
             {
-                await asyncOperationCallback();
-            }
-            finally
-            {
-                // the context finished executing the current operation and can now accept a new async operation
-                _currentOperation = null;
-                _isAvailable.Set();
+                _currentOperation = asyncOperation;
+                try
+                {
+                    await asyncOperationCallback();
+                }
+                finally
+                {
+                    // the context finished executing the current operation and can now accept a new async operation
+                    _currentOperation = null;
+                    _isAvailable.Set();
+                }
             }
         }
 
         public Task SendMessageAsync(Message message, CancellationToken cancellationToken)
         {
-            async Task SendMessageAsync()
+            Task SendMessageAsync()
             {
-                using (var asyncOperation = new AsyncOperation(_nngAio, cancellationToken))
-                {
-                    SetMessage(message);
-                    _currentOperation = asyncOperation;
-                    await SendAsync();
-                }
+                SetMessage(message);
+                return SendAsync();
             }
 
             return ExecuteAsyncOperation(SendMessageAsync, cancellationToken);
@@ -77,12 +77,8 @@ namespace NngSharp.Async
             NngMsg nngMessage = default;
             async Task ReceiveMessageAsync()
             {
-                using (var asyncOperation = new AsyncOperation(_nngAio, cancellationToken))
-                {
-                    _currentOperation = asyncOperation;
-                    await ReceiveAsync();
-                    nngMessage = GetMessage();
-                }
+                await ReceiveAsync();
+                nngMessage = GetMessage();
             }
 
             await ExecuteAsyncOperation(ReceiveMessageAsync, cancellationToken);
