@@ -61,10 +61,12 @@ namespace NngSharp.Async
         {
             async Task SendMessageAsync()
             {
-                using var asyncOperation = new AsyncOperation(_nngAio, cancellationToken);
-                SetMessage(message);
-                _currentOperation = asyncOperation;
-                await SendAsync();
+                using (var asyncOperation = new AsyncOperation(_nngAio, cancellationToken))
+                {
+                    SetMessage(message);
+                    _currentOperation = asyncOperation;
+                    await SendAsync();
+                }
             }
 
             return ExecuteAsyncOperation(SendMessageAsync, cancellationToken);
@@ -75,10 +77,12 @@ namespace NngSharp.Async
             NngMsg nngMessage = default;
             async Task ReceiveMessageAsync()
             {
-                using var asyncOperation = new AsyncOperation(_nngAio, cancellationToken);
-                _currentOperation = asyncOperation;
-                await ReceiveAsync();
-                nngMessage = GetMessage();
+                using (var asyncOperation = new AsyncOperation(_nngAio, cancellationToken))
+                {
+                    _currentOperation = asyncOperation;
+                    await ReceiveAsync();
+                    nngMessage = GetMessage();
+                }
             }
 
             await ExecuteAsyncOperation(ReceiveMessageAsync, cancellationToken);
