@@ -53,15 +53,15 @@ namespace NngSharp.Sockets
 
         public string Name
         {
-            get => SocketOptionHelper.GetStringValue(_nngSocket, SocketOptions.NNG_OPT_SOCKNAME);
-            set => SocketOptionHelper.SetStringValue(_nngSocket, SocketOptions.NNG_OPT_SOCKNAME, value);
+            get => SocketOptionHelper.GetStringValue(_nngSocket, Constants.Options.NNG_OPT_SOCKNAME);
+            set => SocketOptionHelper.SetStringValue(_nngSocket, Constants.Options.NNG_OPT_SOCKNAME, value);
         }
 
-        public bool IsRaw => SocketOptionHelper.GetBoolValue(_nngSocket, SocketOptions.NNG_OPT_RAW);
+        public bool IsRaw => SocketOptionHelper.GetBoolValue(_nngSocket, Constants.Options.NNG_OPT_RAW);
 
-        public ProtocolType ProtocolType => (ProtocolType)SocketOptionHelper.GetInt32Value(_nngSocket, SocketOptions.NNG_OPT_PROTO);
+        public ProtocolType ProtocolType => (ProtocolType)SocketOptionHelper.GetInt32Value(_nngSocket, Constants.Options.NNG_OPT_PROTO);
 
-        public string ProtocolName => SocketOptionHelper.GetStringValue(_nngSocket, SocketOptions.NNG_OPT_PROTONAME);
+        public string ProtocolName => SocketOptionHelper.GetStringValue(_nngSocket, Constants.Options.NNG_OPT_PROTONAME);
 
         public SocketOptions Options { get; }
 
