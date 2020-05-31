@@ -50,9 +50,19 @@ namespace NngSharp.Tests.Data
         [MemberData(nameof(Implementations))]
         public void SetDataContract_And_GetDataContract(IMemory memory)
         {
-            var entity = new Entity() {Property = "value"};
+            var entity = new Entity {Property = "value"};
             memory.SetDataContract(entity);
             var result = memory.GetDataContract<Entity>();
+            result.Should().Match<Entity>(x => x.Property == "value");
+        }
+
+        [Theory]
+        [MemberData(nameof(Implementations))]
+        public void SetJson_And_GetJson(IMemory memory)
+        {
+            var entity = new Entity { Property = "value" };
+            memory.SetJson(entity);
+            var result = memory.GetJson<Entity>();
             result.Should().Match<Entity>(x => x.Property == "value");
         }
 
