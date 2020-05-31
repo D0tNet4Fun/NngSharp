@@ -1,7 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Text.Json;
 
 namespace NngSharp.Data
 {
@@ -58,7 +60,27 @@ namespace NngSharp.Data
 
         public static void SetDataContract<T>(this IMemory memory, T value, DataContractJsonSerializer serializer)
         {
-            var capacity = 128; // todo
+            WriteToMemoryStream(memory, stream =>
+            {
+                serializer.WriteObject(stream, value);
+            });
+        }
+
+        public static void SetJson<T>(this IMemory memory, T value, JsonSerializerOptions jsonSerializerOptions = null)
+        {
+            if (jsonSerializerOptions == null) jsonSerializerOptions = GetDefaultJsonSerializerOptions();
+            WriteToMemoryStream(memory, stream =>
+            {
+                using (var writer = new Utf8JsonWriter(stream))
+                {
+                    JsonSerializer.Serialize(writer, value, jsonSerializerOptions);
+                }
+            });
+        }
+
+        private static void WriteToMemoryStream(IMemory memory, Action<Stream> write)
+        {
+            var capacity = 4; // todo
             memory.Allocate(capacity);
             while (true)
             {
@@ -66,17 +88,15 @@ namespace NngSharp.Data
                 {
                     try
                     {
-                        serializer.WriteObject(stream, value);
+                        write(stream);
+                        memory.Length = checked((int)stream.Position);
+                        break;
                     }
                     catch (NotSupportedException)
                     {
                         memory.Allocate(capacity *= 2);
-                        continue;
                     }
-                    memory.Length = checked((int)stream.Position);
                 }
-
-                break;
             }
         }
 
@@ -88,6 +108,23 @@ namespace NngSharp.Data
             {
                 return (T)serializer.ReadObject(stream);
             }
+        }
+
+        public static T GetJson<T>(this IMemory memory, JsonSerializerOptions jsonSerializerOptions = null)
+        {
+            if (jsonSerializerOptions == null) jsonSerializerOptions = GetDefaultJsonSerializerOptions();
+            var reader = new Utf8JsonReader(memory.AsSpan());
+            return JsonSerializer.Deserialize<T>(ref reader, jsonSerializerOptions);
+        }
+
+        public static JsonSerializerOptions GetDefaultJsonSerializerOptions()
+        {
+            var jsonSerializerOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            };
+            return jsonSerializerOptions;
         }
     }
 }
